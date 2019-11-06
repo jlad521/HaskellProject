@@ -28,8 +28,8 @@ p1 = (Black, Just(Piece OneB Man))
 p2 = (Black, Just(Piece TwoW Man))
 actual_board = addColor b 
 
-updateBoard :: Move -> (Color, Maybe Piece) -> Board -> Board 
-updateBoard (ol, dl) val (Board brd) = nb
+updateBoard :: Move -> Board -> Board 
+updateBoard (ol, dl) (Board brd) = nb
     where tile :: Maybe (Color, Maybe Piece)
           tile = Map.lookup ol brd -- look up tile of origin
           nb   =  case tile of
@@ -72,5 +72,7 @@ isWin = undefined
 isTie :: Board -> Bool
 isTie = undefined
 
+-- TEMP implementation for testing:
+-- do no validation, just apply the move.
 evalMove :: Board -> Player -> Move -> (Maybe Board, Maybe String)
-evalMove = undefined
+evalMove b p m = (Just (updateBoard m b), Nothing)

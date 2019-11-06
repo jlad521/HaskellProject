@@ -30,7 +30,7 @@ boardChars :: [Char]
 boardChars = map chr [ord('A') .. ord('A') + boardSize - 1]
 
 usage :: String
-usage = "Usage: Checkers {classic|inverse}"
+usage = "Usage: runhaskell Checkers {classic|inverse}"
 
 -- Parse command line arguments to the checkers game.
 parseArgs :: [String] -> Maybe (Mode, Int)
@@ -49,7 +49,7 @@ main :: IO ()
 main = do args <- getArgs
           case parseArgs (args ++ [show boardSize]) of -- hack until board is dynamic
             Nothing           -> putStrLn usage
-            Just (mode, size) -> do board <- return new
+            Just (mode, size) -> do board <- return actual_board
                                     putStrLn ("Welcome to " ++ (show mode) ++ " Checkers!")
                                     play mode board OneB -- Game always starts with player One
 
