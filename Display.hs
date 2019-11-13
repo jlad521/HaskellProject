@@ -22,25 +22,25 @@ man :: String
 man = "\\26C0"
 
 {- Generate a string representation of the board,
-      1   2   3   4   5   6   7   8
+      A   B   C   D   E   F   G   H
     +---+---+---+---+---+---+---+---+
-  A |   |   |   |   |   |   |   |   |
+  1 |   |   |   |   |   |   |   |   |
     +---+---+---+---+---+---+---+---+
     ...
 -}
 stringify :: Board -> Int -> String -> String
 stringify (Board m) cs rs = concat result
     where sep = "  " ++ concat (intersperse "---" (replicate (cs+1) "+"))
-          colHeader = "    " ++ concat (intersperse "   " (map show [1 .. cs]))
+          colHeader = "    " ++ concat (intersperse "   " (map (\x -> [x]) rs))
           rows :: [String]
           rows = map (buildRow (Board m)) locs
               where locs :: [[(Char, Int)]]
-                    locs = groupBy (\ l1 l2 -> fst l1 == fst l2 ) [(r, c) | r <-rs, c <- [1 .. cs]] -- guaranteed to be in order
+                    locs = groupBy (\ l1 l2 -> snd l1 == snd l2 ) [(r, c) | c <- [1 .. cs], r <- rs] -- guaranteed to be in order
           result = (intersperse ("\n") ( intersperse sep ([colHeader] ++ rows))) ++ ["\n", sep]
 
 -- Build an individual row based on Board contents
 buildRow :: Board -> [(Char, Int)] -> String
-buildRow (Board m) locs = [fst (head locs)] ++ " |" ++ concat (map (\ p -> " " ++ p ++ " |") pieces)
+buildRow (Board m) locs = show (snd (head locs)) ++ " |" ++ concat (map (\ p -> " " ++ p ++ " |") pieces)
     where pieces = map (\ l -> case Map.lookup l m of
                                  Nothing           -> "E" -- error
                                  Just (c, Nothing) -> " "
@@ -49,4 +49,4 @@ buildRow (Board m) locs = [fst (head locs)] ++ " |" ++ concat (map (\ p -> " " +
                                                                 else "W") locs
 
 setCursor :: (Int, Int) -> IO ()
-setCursor = undeifned
+setCursor = undefined
