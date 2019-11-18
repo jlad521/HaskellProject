@@ -18,8 +18,26 @@ import System.IO
 
 import Model
 
-man :: String
-man = "\\26C0"
+
+-- Unicode chars for Checkers pieces.
+wMan :: String
+wMan = "⛀"
+
+wQueen :: String
+wQueen = "⛁"
+
+bMan :: String
+bMan = "⛂"
+
+bQueen :: String
+bQueen = "⛃"
+
+-- Convert a checkers Piece to String.
+pts :: Piece -> String
+pts (Piece OneB Man) = bMan
+pts (Piece OneB Queen) = bQueen
+pts (Piece TwoW Man) = wMan
+pts (Piece TwoW Queen) = wQueen 
 
 {- Generate a string representation of the board,
       A   B   C   D   E   F   G   H
@@ -44,9 +62,7 @@ buildRow (Board m) locs = show (snd (head locs)) ++ " |" ++ concat (map (\ p -> 
     where pieces = map (\ l -> case Map.lookup l m of
                                  Nothing           -> "E" -- error
                                  Just (c, Nothing) -> " "
-                                 Just (c, Just (Piece p _))  -> if p == OneB
-                                                                then "B"
-                                                                else "W") locs
+                                 Just (c, Just p)  -> pts p) locs
 
 setCursor :: (Int, Int) -> IO ()
 setCursor = undefined
