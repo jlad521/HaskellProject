@@ -17,9 +17,6 @@ import Text.Read
 import Display
 import Model
 
-data Mode = Classic | Inverse
-    deriving (Show, Eq)
-
 
 
 -- Board size hardcoded for now, might be customizeable later.
@@ -33,9 +30,9 @@ usage :: String
 usage = "Usage: runhaskell Checkers {classic|inverse}"
 
 -- Parse command line arguments to the checkers game.
-parseArgs :: [String] -> Maybe (Mode, Int)
+parseArgs :: [String] -> Maybe (GameMode, Int)
 parseArgs [m, s] = do mv <- case map toLower m of
-                              "classic" -> return Classic
+                              "classic" -> return Standard
                               "inverse" -> return Inverse
                               _         -> Nothing
                       sv <- case readMaybe s :: Maybe Int of
@@ -74,7 +71,7 @@ nextPlayer p = if p == OneB then TwoW else OneB
 
 
 -- Execute the read-eval-print loop for the game.
-play :: Mode -> Board -> Player -> IO ()
+play :: GameMode -> Board -> Player -> IO ()
 play mode b@(Board mp) p =
     do putStrLn (stringify b boardSize boardChars)
        putStrLn ("\nPlayer " ++ (show p) ++ "'s turn.")
@@ -83,7 +80,7 @@ play mode b@(Board mp) p =
        case  parseMove mvs of
          Nothing   -> do putStrLn ("Error parsing the move. Please use the following format: RowColumn-RowColumn, i.e. A1-C3")
                          play mode b p
-         Just move -> do case evalMove b p move of
+         Just move -> do case evalMove b p move mode of
                            (Nothing, Just err) -> do putStrLn ("Invalid move: " ++ err)
                                                      play mode b p
                            (Just nb, Just vm)  -> do putStrLn (stringify nb boardSize boardChars)
