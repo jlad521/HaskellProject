@@ -51,6 +51,15 @@ End
 newBoard :: Board
 newBoard = addPieces (Board (Map.fromList([ ((c, i), (White, Nothing)) | c <- ['A' .. 'H'], i <- [1..8]])))
 
+-- Board without pieces for testing.
+emptyBoard :: Board
+emptyBoard = Board (Map.mapWithKey toss nm)
+  where toss :: Loc -> (Color, Maybe Piece) -> (Color, Maybe Piece)
+        toss key val = case val of
+                         (c, Just _) -> (c, Nothing)
+                         v           -> v 
+        (Board nm) = newBoard
+
 --define these as global, for use in various functions
 black_piece = Just (Black, Just(Piece OneB Man))
 white_piece = Just (Black, Just(Piece TwoW Man))
@@ -234,8 +243,8 @@ validHop (Board b) sl@(sl_r, sl_c) el rank p
 validEnd :: Board -> Move -> Player -> (Bool,Maybe Loc)
 validEnd (Board b) (sl, el) p = case (Map.lookup(el) b, getRank (Board b) sl ) of
                                      (Nothing,_) -> (False, Nothing)
-                                     (Just (c, Nothing), Just rank) -> if c == White then (False, Nothing)
-                                                                       else if adjacent (Board b) sl el rank p || fst (validHop (Board b) sl el rank p) then (True, snd (validHop (Board b) sl el rank p)) 
+                                     (Just (c, Nothing), Just rank) -> if adjacent (Board b) sl el rank p || fst (validHop (Board b) sl el rank p) 
+                                                                       then (True, snd (validHop (Board b) sl el rank p)) 
                                                                        else (False, Nothing)
                                      (Just (c, Just piece), _) -> (False, Nothing)
    -- where
@@ -243,11 +252,10 @@ validEnd (Board b) (sl, el) p = case (Map.lookup(el) b, getRank (Board b) sl ) o
 
 validStart :: Board -> Loc -> Player -> Bool
 validStart (Board b) l p = case Map.lookup(l) b of
-                                Nothing               -> False
-                                Just (c, Nothing)     -> False 
-                                Just (c, Just (Piece player rank)) -> if c == White then False
-                                                                      else if player == p then True
-                                                                      else False
+                                Nothing               -> False -- Failed to find tile, must be invalid.
+                                Just (c, Nothing)     -> False -- No piece on the tile, invalid.
+                                Just (c, Just (Piece player rank)) -> player == p -- Is player moving their own piece?
+
 
 evalMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
 --evalMove b p m = (Just (updateBoard m b), Nothing)

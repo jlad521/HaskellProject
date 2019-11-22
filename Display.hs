@@ -13,8 +13,6 @@ import Data.List
 import Data.Char
 import qualified Data.Map.Strict as Map
 import System.IO
---import Data.String.Unicode
---import Text.Show.Unicode TODO fogure out how to install a Haskell package
 
 import Model
 
@@ -34,9 +32,9 @@ bQueen = "⛃"
 
 -- Convert a checkers Piece to String.
 pts :: Piece -> String
-pts (Piece OneB Man) = bMan
+pts (Piece OneB Man)   = bMan
 pts (Piece OneB Queen) = bQueen
-pts (Piece TwoW Man) = wMan
+pts (Piece TwoW Man)   = wMan
 pts (Piece TwoW Queen) = wQueen 
 
 {- Generate a string representation of the board,
@@ -64,5 +62,42 @@ buildRow (Board m) locs = show (snd (head locs)) ++ " |" ++ concat (map (\ p -> 
                                  Just (c, Nothing) -> " "
                                  Just (c, Just p)  -> pts p) locs
 
-setCursor :: (Int, Int) -> IO ()
-setCursor = undefined
+
+{- Cursor Control Functionality -}
+
+-- A representation of the ESC char.
+esc :: Char
+esc = chr 27 -- The 'escape' special character
+
+-- Clear the terminal and set cursor at (0,0)
+clear :: String
+clear = esc : "[2J"
+
+-- Position the cursor at given Row, Col coordinates (in screen space).
+setCursor :: Int -> Int -> String
+setCursor line col = [esc] ++ "[" ++ (show line) ++ ";" ++ (show col) ++ "H"
+
+
+{- DEBUGGING -}
+
+dump :: Board -> IO ()
+dump b = putStrLn (stringify b 8 ['A'..'H'])
+
+dumpEval :: (Maybe Board, Maybe String) -> IO ()
+dumpEval (Nothing, Just s) = putStrLn s
+dumpEval (Just b, Nothing) = dump b
+dumpEval (Just b, Just s)  = do dump b
+                                putStrLn s
+dumpEval _ = putStrLn "*** ERROR ***"
+
+
+
+
+
+
+
+
+
+
+
+

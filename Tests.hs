@@ -9,6 +9,7 @@ module Tests where
 import Test.HUnit
 import Checkers
 import Model
+import Display
 import Data.Map.Strict as Map
 
 {-
@@ -26,17 +27,38 @@ import Data.Map.Strict as Map
     5) "Eat" with a queen in every diagonal direction 1 or more tiles away with same sub-cases as 1.
 -}
 
+-- White Man for testing.
+wm :: (Color, Maybe Piece) -> (Color, Maybe Piece)
+wm (c, _) = (c, Just (Piece TwoW Man))
+
+-- Black Man for testing.
+bm :: (Color, Maybe Piece) -> (Color, Maybe Piece)
+bm (c, _) = (c, Just (Piece OneB Man))
+
 manBoard :: Board
-manBoard = let (Board m) = new
-           in (Board (Map.adjust (const p1) ('E', 4) m))
+manBoard = let (Board m) = emptyBoard
+            in (Board (Map.adjust wm ('E', 4) m))
 
 manMoveTests :: Test
 manMoveTests =
-  TestList [ evalMove manBoard OneB moveFR ~?= moveFRres
+  TestList [ evalMove manBoard TwoW moveFR Standard ~?= moveFRres -- Test: Move White Man 1 tile top right. EXPECT: Success
 
            ]
-    where moveFR = (('E', 4), ('F', 5))
+    where moveFR = (('E', 4), ('F', 3))
 
 moveFRres :: (Maybe Board, Maybe String)
-moveFRres = let (Board m) = new
-            in (Just (Board (Map.adjust (const p1) ('F', 5) m)), Just "MSG")
+moveFRres = let (Board m) = emptyBoard
+             in (Just (Board (Map.adjust wm ('F', 3) m)), Just "MSG")
+
+-- Carry out all the tests.
+main :: IO ()
+main = do runTestTT manMoveTests
+          return ()
+
+
+
+
+
+
+
+
