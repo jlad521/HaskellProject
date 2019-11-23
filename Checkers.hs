@@ -87,3 +87,18 @@ play mode b@(Board mp) p =
                                                      putStrLn ("Victory for Player " ++ (show p))
                            (Just nb, Nothing)  -> play mode nb (nextPlayer p)
                            _                   -> putStrLn ("An invalid evaluaton state has occurred.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -37,22 +37,92 @@ bm (c, _) = (c, Just (Piece OneB Man))
 
 manBoard :: Board
 manBoard = let (Board m) = emptyBoard
-            in (Board (Map.adjust wm ('E', 4) m))
+            in (Board (Map.adjust wm ('D', 4) m))
+
+edgeManBoard :: Board
+edgeManBoard = let (Board m) = emptyBoard
+                in (Board (Map.adjust wm ('C', 1) m))
 
 manMoveTests :: Test
 manMoveTests =
-  TestList [ evalMove manBoard TwoW moveFR Standard ~?= moveFRres -- Test: Move White Man 1 tile top right. EXPECT: Success
+  TestList [ 
+             -- Generic
+             -- TODO: Invalid start location
+ 
+             -- White man
+             evalMove manBoard TwoW moveFR Standard ~?= moveFRres, -- Test 1: Move 1 tile forward right.	EXPECT: Success
+             evalMove manBoard TwoW moveFL Standard ~?= moveFLres, -- Test 2: Move 1 tile forward left.		EXPECT: Success
+             evalMove manBoard TwoW moveBR Standard ~?= moveBRres, -- Test 3: Move 1 tile back right.  		EXPECT: Fail: no backwards move
+             evalMove manBoard TwoW moveBL Standard ~?= moveBLres, -- Test 4: Move 1 tile back left.  		EXPECT: Fail: no backwards move
+
+             evalMove manBoard TwoW moveFR2 Standard ~?= moveFR2res, -- Test 5: Move 2 tiles forward right.		EXPECT: Fail: > 1 tile
+             evalMove manBoard TwoW moveFL2 Standard ~?= moveFL2res, -- Test 6: Move 2 tiles forward right.		EXPECT: Fail: > 1 tile
+             evalMove edgeManBoard TwoW moveFROOB Standard ~?= moveFROOBres, -- Test 7: Move FR out of bounds.  EXPECT: Fail: Out of bounds
+             evalMove edgeManBoard TwoW moveFLOOB Standard ~?= moveFLOOBres  -- Test 8: Move FL out of bounds.  EXPECT: Fail: Out of bounds
+
+             --TODO: Move to destination occupied by Man.
+             --TODO: Hop over a man of opposite color and eat.
+             --TODO: Fail to hop over a man of same color.
+             --TODO: Become a queen.
+
+             -- Black man
+             --TODO: All of the same tests, but for a black piece (i.e. in opposite direction)
+           ]
+    where moveFR = (('D', 4), ('E', 3))
+          moveFL = (('D', 4), ('C', 3))
+          moveBR = (('D', 4), ('E', 5))
+          moveBL = (('D', 4), ('C', 5))
+
+          moveFR2 = (('D', 4), ('F', 2))
+          moveFL2 = (('D', 4), ('B', 2))
+          moveFROOB = (('C', 1), ('D', 0))
+          moveFLOOB = (('C', 1), ('B', 0))
+
+queenMoveTests :: Test
+queenMoveTests = 
+  TestList [
 
            ]
-    where moveFR = (('E', 4), ('F', 3))
 
+{- TEST RESULTS -}
 moveFRres :: (Maybe Board, Maybe String)
 moveFRres = let (Board m) = emptyBoard
-             in (Just (Board (Map.adjust wm ('F', 3) m)), Just "MSG")
+             in (Just (Board (Map.adjust wm ('E', 3) m)), Nothing)
+
+moveFLres :: (Maybe Board, Maybe String)
+moveFLres = let (Board m) = emptyBoard
+             in (Just (Board (Map.adjust wm ('C', 3) m)), Nothing)
+
+moveBRres :: (Maybe Board, Maybe String)
+moveBRres = let (Board m) = emptyBoard
+             in (Nothing, Just "Invalid ending location. Please try again.")
+
+moveBLres :: (Maybe Board, Maybe String)
+moveBLres = let (Board m) = emptyBoard
+             in (Nothing, Just "Invalid ending location. Please try again.")
+
+moveFR2res :: (Maybe Board, Maybe String)
+moveFR2res = let (Board m) = emptyBoard
+             in (Nothing, Just "Invalid ending location. Please try again.")
+
+moveFL2res :: (Maybe Board, Maybe String)
+moveFL2res = let (Board m) = emptyBoard
+             in (Nothing, Just "Invalid ending location. Please try again.")
+
+moveFROOBres :: (Maybe Board, Maybe String)
+moveFROOBres = let (Board m) = edgeManBoard
+             in (Nothing, Just "Invalid ending location. Please try again.")
+
+moveFLOOBres :: (Maybe Board, Maybe String)
+moveFLOOBres = let (Board m) = edgeManBoard
+             in (Nothing, Just "Invalid ending location. Please try again.")
+
+{- ##################### -}
 
 -- Carry out all the tests.
 main :: IO ()
 main = do runTestTT manMoveTests
+          runTestTT queenMoveTests
           return ()
 
 

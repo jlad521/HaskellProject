@@ -19,16 +19,16 @@ import Model
 
 -- Unicode chars for Checkers pieces.
 wMan :: String
-wMan = "⛀"
+wMan = "●"
 
 wQueen :: String
-wQueen = "⛁"
+wQueen = "◕"
 
 bMan :: String
-bMan = "⛂"
+bMan = "○"
 
 bQueen :: String
-bQueen = "⛃"
+bQueen = "◔"
 
 -- Convert a checkers Piece to String.
 pts :: Piece -> String
@@ -36,6 +36,7 @@ pts (Piece OneB Man)   = bMan
 pts (Piece OneB Queen) = bQueen
 pts (Piece TwoW Man)   = wMan
 pts (Piece TwoW Queen) = wQueen 
+
 
 {- Generate a string representation of the board,
       A   B   C   D   E   F   G   H
@@ -56,11 +57,15 @@ stringify (Board m) cs rs = concat result
 
 -- Build an individual row based on Board contents
 buildRow :: Board -> [(Char, Int)] -> String
-buildRow (Board m) locs = show (snd (head locs)) ++ " |" ++ concat (map (\ p -> " " ++ p ++ " |") pieces)
+buildRow (Board m) locs = show (snd (head locs)) ++ " |" ++ concat (map (\ p -> p ++ "|") pieces)
     where pieces = map (\ l -> case Map.lookup l m of
                                  Nothing           -> "E" -- error
-                                 Just (c, Nothing) -> " "
-                                 Just (c, Just p)  -> pts p) locs
+                                 Just (c, Nothing) -> if c == White
+                                                      then whiteBG ++ "   " ++ blackBG
+                                                      else "   "
+                                 Just (c, Just p)  -> if c == White
+                                                      then whiteBG ++ " " ++ (pts p) ++ " " ++ blackBG
+                                                      else " " ++ (pts p) ++ " ") locs
 
 
 {- Cursor Control Functionality -}
@@ -72,6 +77,14 @@ esc = chr 27 -- The 'escape' special character
 -- Clear the terminal and set cursor at (0,0)
 clear :: String
 clear = esc : "[2J"
+
+-- Toggle while background
+whiteBG :: String
+whiteBG = esc : "[47m"
+
+-- Toggle black background
+blackBG :: String
+blackBG = esc : "[40m"
 
 -- Position the cursor at given Row, Col coordinates (in screen space).
 setCursor :: Int -> Int -> String
@@ -89,6 +102,7 @@ dumpEval (Just b, Nothing) = dump b
 dumpEval (Just b, Just s)  = do dump b
                                 putStrLn s
 dumpEval _ = putStrLn "*** ERROR ***"
+
 
 
 

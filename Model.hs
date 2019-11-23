@@ -241,30 +241,40 @@ validHop (Board b) sl@(sl_r, sl_c) el rank p
 --sl = start location , el = end location 
 --this function returns the location of a piece that was hopped over
 validEnd :: Board -> Move -> Player -> (Bool,Maybe Loc)
-validEnd (Board b) (sl, el) p = case (Map.lookup(el) b, getRank (Board b) sl ) of
-                                     (Nothing,_) -> (False, Nothing)
-                                     (Just (c, Nothing), Just rank) -> if adjacent (Board b) sl el rank p || fst (validHop (Board b) sl el rank p) 
-                                                                       then (True, snd (validHop (Board b) sl el rank p)) 
-                                                                       else (False, Nothing)
-                                     (Just (c, Just piece), _) -> (False, Nothing)
-   -- where
-         --hopResult = validHop b sl el rank p --hmmmm, rank is out of scope in this clause due to the case statement. Let instead? future work
+validEnd brd@(Board b) (sl, el) p = 
+    case r of
+      Nothing   -> (False, Nothing)
+      Just rank -> case (Map.lookup(el) b) of
+                      Just (Black, Nothing) -> if adjacent brd sl el rank p || hopValid 
+                                              then (True, hopLoc) 
+                                              else (False, Nothing)
+                      _                     -> (False, Nothing) -- Any destination that is not a black empty tile is invalid. 
+          where (hopValid, hopLoc) = validHop brd sl el rank p
+  where r = case Map.lookup sl b of
+                  Just (_, Just (Piece _ rnk)) -> Just rnk
+                  _                             -> Nothing
+        
 
+
+--hopResult = validHop b sl el rank p --hmmmm, rank is out of scope in this clause due to the case statement. Let instead? future work
+
+{-
+    Validate start location of a move.
+-}
 validStart :: Board -> Loc -> Player -> Bool
 validStart (Board b) l p = case Map.lookup(l) b of
-                                Nothing               -> False -- Failed to find tile, must be invalid.
-                                Just (c, Nothing)     -> False -- No piece on the tile, invalid.
-                                Just (c, Just (Piece player rank)) -> player == p -- Is player moving their own piece?
+                             Just (Black, Just (Piece player _)) -> player == p -- Only valid start is an existing piece belonging to player.
+                             _                                   -> False
 
 
 evalMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
---evalMove b p m = (Just (updateBoard m b), Nothing)
-evalMove b p mv@(startLoc, endLoc) gm | not (validStart b startLoc p) = (Just b, Just "Invalid starting location. Please try again.")
-                                      | not $ fst validEndResult      = (Just b, Just "Invalid ending location. Please try again.")
-                                      | gm == Inverse && possibleHop b startLoc p  = (Just b, Just "Must take available hop move. Please try again.")
-                                      | otherwise = case snd validEndResult of 
-                                                      Nothing -> (Just (updateBoard mv b), Nothing)
-                                                      Just l  -> (Just (updateBoard mv (removePiece b l)), Nothing)
+evalMove b p mv@(startLoc, endLoc) gm 
+    | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
+    | not $ fst validEndResult      = (Nothing, Just "Invalid ending location. Please try again.")
+    | gm == Inverse && possibleHop b startLoc p  = (Nothing, Just "Must take available hop move. Please try again.")
+    | otherwise = case snd validEndResult of 
+                    Nothing -> (Just (updateBoard mv b), Nothing)
+                    Just l  -> (Just (updateBoard mv (removePiece b l)), Nothing)
   where validEndResult = validEnd b mv p                                                      
 
 
