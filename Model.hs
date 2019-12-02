@@ -44,8 +44,9 @@ test_start = ('H',6)
 possibleHopTest = possibleHop test_valid ('A',3) OneB
 
 {-
-End
+end
 -}
+
 
 
 newBoard :: Board
@@ -113,6 +114,12 @@ getRank (Board b) l = case Map.lookup l b of
 
 removePiece :: Board -> Loc -> Board
 removePiece (Board b) (c,i) = (Board (Map.insert (c,i) (Black, Nothing) b))
+
+checkPossibleHops :: Board -> Player -> Bool
+checkPossibleHops (Board b) pl = aux (Map.toList b) pl
+  where aux []     _ = False 
+        aux (t:ts) p = possibleHop (Board b) l p || aux ts p 
+            where l  = fst t 
 
 noMovesLeft :: Board -> Player -> Bool
 noMovesLeft (Board b) p = aux (Map.toList b) p 
@@ -237,22 +244,25 @@ validHop (Board b) sl@(sl_r, sl_c) el rank p
         ne_p =  Map.lookup(ne) b 
         el_piece = getPiece (Board b) el
 
--- working but without comprehensive testing
---sl = start location , el = end location 
---this function returns the location of a piece that was hopped over
-validEnd :: Board -> Move -> Player -> (Bool,Maybe Loc)
+-- sl = start location , el = end location 
+-- first bool indicates if it's a valid move. 
+-- second bool indicates if a piece was hopped (needed for inverse game mode)
+-- Maybe Location: returns the location of the ending location if valid 
+validEnd :: Board -> Move -> Player -> (Bool, Bool, Maybe Loc)
 validEnd brd@(Board b) (sl, el) p = 
     case r of
-      Nothing   -> (False, Nothing)
+      Nothing   -> (False, False, Nothing)
       Just rank -> case (Map.lookup(el) b) of
-                      Just (Black, Nothing) -> if adjacent brd sl el rank p || hopValid 
-                                              then (True, hopLoc) 
-                                              else (False, Nothing)
-                      _                     -> (False, Nothing) -- Any destination that is not a black empty tile is invalid. 
+                      Just (Black, Nothing) -> if adjacent brd sl el rank p 
+                                               then (True, False, hopLoc)
+                                               else if hopValid then (True, True, hopLoc)
+                                               --then (True, hopLoc) 
+                                               else (False, False, Nothing)
+                      _                     -> (False, False, Nothing) -- Any destination that is not a black empty tile is invalid. 
           where (hopValid, hopLoc) = validHop brd sl el rank p
   where r = case Map.lookup sl b of
                   Just (_, Just (Piece _ rnk)) -> Just rnk
-                  _                             -> Nothing
+                  _                            -> Nothing
         
 
 
@@ -270,12 +280,13 @@ validStart (Board b) l p = case Map.lookup(l) b of
 evalMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
 evalMove b p mv@(startLoc, endLoc) gm 
     | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
-    | not $ fst validEndResult      = (Nothing, Just "Invalid ending location. Please try again.")
-    | gm == Inverse && possibleHop b startLoc p  = (Nothing, Just "Must take available hop move. Please try again.")
-    | otherwise = case snd validEndResult of 
+    | not $ valid_move     = (Nothing, Just "Invalid ending location. Please try again.")
+    | gm == Inverse && (checkPossibleHops b p && not isHop)  = (Nothing, Just "Must take available hop move. Please try again.")
+    | otherwise = case end_loc of 
                     Nothing -> (Just (updateBoard mv b), Nothing)
                     Just l  -> (Just (updateBoard mv (removePiece b l)), Nothing)
-  where validEndResult = validEnd b mv p                                                      
+  --where validEndResult = validEnd b mv p                                                      
+  where (valid_move, isHop, end_loc) = validEnd b mv p                                                      
 
 
 {-
