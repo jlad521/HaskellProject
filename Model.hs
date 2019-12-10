@@ -13,8 +13,13 @@ data Piece  = Piece Player Rank
     deriving (Show, Eq)
 data Rank   = Man | Queen
     deriving (Show, Eq)
+
 data Player = OneB | TwoW
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Show Player where
+  show OneB = "Black"
+  show TwoW = "White"
 
 type Loc = (Char, Int)
 

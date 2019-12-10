@@ -10,9 +10,12 @@ module Checkers where
 
 import System.Environment
 import System.IO
+import System.Exit
+import Control.Concurrent
 import Data.Char
 import Data.Maybe
 import Text.Read
+import Data.List
 
 import Display
 import Model
@@ -30,25 +33,34 @@ usage :: String
 usage = "Usage: runhaskell Checkers {classic|inverse}"
 
 -- Parse command line arguments to the checkers game.
-parseArgs :: [String] -> Maybe (GameMode, Int)
-parseArgs [m, s] = do mv <- case map toLower m of
-                              "classic" -> return Standard
-                              "inverse" -> return Inverse
-                              _         -> Nothing
-                      sv <- case readMaybe s :: Maybe Int of
-                              Just i -> return i
-                              _      -> Nothing
-                      return (mv, sv)
+parseArgs :: [String] -> Maybe (GameMode, Bool, Int)
+parseArgs [m, s] = 
+    do mv <- case map toLower m of
+               "classic" -> return Standard
+               "inverse" -> return Inverse
+               _         -> Nothing
+       sv <- case readMaybe s :: Maybe Int of
+               Just i -> return i
+               _      -> Nothing
+       return (mv, False, sv)
+parseArgs [m, ap, s] =
+    case parseArgs [m, s] of
+      Nothing -> Nothing
+      Just (gm, _, bs) -> Just (gm, (ap == "auto"), bs)
 parseArgs _ = Nothing
 
 -- Parse command line arguments and dispatch the appropriate game loop.
 main :: IO ()
 main = do args <- getArgs
           case parseArgs (args ++ [show boardSize]) of -- hack until board is dynamic
-            Nothing           -> putStrLn usage
-            Just (mode, size) -> do board <- return actual_board
-                                    putStrLn ("Welcome to " ++ (show mode) ++ " Checkers!")
-                                    play mode board OneB -- Game always starts with player One
+            Nothing               -> putStrLn usage
+            Just (mode, ap, size) -> do board <- return actual_board
+                                        putStrLn ("Welcome to " ++ (show mode) ++ " Checkers!")
+                                        moves <- if ap 
+                                                 then do putStrLn "Auto-Playing a round using STDIN." 
+                                                         readAutoMoves
+                                                 else return Nothing
+                                        play mode board TwoW moves -- Game always starts with White
 
           
 -- Parse a given string into a move.
@@ -65,28 +77,61 @@ parseMove [rs1, cs1, '-', rs2, cs2] =
        Just (l1, l2)
 parseMove _ = Nothing
 
+{-
+    Get all lines from STDIN.
+    If any were read, hand them over to the game loop.
+    Used by the autoplay feature.
+-}
+readAutoMoves :: IO (Maybe [String])
+readAutoMoves = do lines <- getContents
+                   case lines of
+                     "" -> return Nothing
+                     ls -> return (Just (filter (/="") (splitOn '\n' lines)))
+
 -- Get next player to take a turn.
 nextPlayer :: Player -> Player
 nextPlayer p = if p == OneB then TwoW else OneB
 
 
 -- Execute the read-eval-print loop for the game.
-play :: GameMode -> Board -> Player -> IO ()
-play mode b@(Board mp) p =
+play :: GameMode -> Board -> Player -> Maybe [String] -> IO ()       
+play mode b@(Board mp) p mvs =
     do putStrLn (stringify b boardSize boardChars)
        putStrLn ("\nPlayer " ++ (show p) ++ "'s turn.")
        putStrLn ("Enter your move: ")
-       mvs <- getLine
-       case  parseMove mvs of
+       m <- case mvs of
+               Nothing     -> getLine
+               Just (x:xs) -> do putStrLn ("Interpreting auto-move " ++ x)
+                                 threadDelay 1000000
+                                 return x
+               Just []     -> do putStrLn ("Auto-Play over, ran out of moves. Shutting down...")
+                                 exitWith ExitSuccess -- Temp hack. Find a way to force a victory at this step.
+       fm <- case mvs of
+                Nothing     -> return Nothing
+                Just []     -> return (Just [])
+                Just (_:xs) -> return (Just xs)
+       case  parseMove m of
          Nothing   -> do putStrLn ("Error parsing the move. Please use the following format: RowColumn-RowColumn, i.e. A1-C3")
-                         play mode b p
+                         play mode b p Nothing -- Errors in auto switch to manual
          Just move -> do case evalMove b p move mode of
                            (Nothing, Just err) -> do putStrLn ("Invalid move: " ++ err)
-                                                     play mode b p
+                                                     play mode b p Nothing -- Invalid moves in auto switch to manual
                            (Just nb, Just vm)  -> do putStrLn (stringify nb boardSize boardChars)
                                                      putStrLn ("Victory for Player " ++ (show p))
-                           (Just nb, Nothing)  -> play mode nb (nextPlayer p)
+                           (Just nb, Nothing)  -> do play mode nb (nextPlayer p) fm 
                            _                   -> putStrLn ("An invalid evaluaton state has occurred.")
+
+
+
+
+
+{- Helper functions-}
+
+-- Split a list on a given delimeter.
+splitOn :: Eq a => a -> [a] -> [[a]]
+splitOn delim lst = foldr f [[]] lst
+  where f c l@(x:xs) | c == delim = [] : l
+                     | otherwise = (c : x) : xs
 
 
 
