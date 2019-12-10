@@ -30,7 +30,7 @@ boardChars :: [Char]
 boardChars = map chr [ord('A') .. ord('A') + boardSize - 1]
 
 usage :: String
-usage = "Usage: runhaskell Checkers {classic|inverse}"
+usage = "Usage: runhaskell Checkers {classic|inverse} [auto]"
 
 -- Parse command line arguments to the checkers game.
 parseArgs :: [String] -> Maybe (GameMode, Bool, Int)
@@ -60,6 +60,8 @@ main = do args <- getArgs
                                                  then do putStrLn "Auto-Playing a round using STDIN." 
                                                          readAutoMoves
                                                  else return Nothing
+                                        putStrLn clear
+                                        putStrLn (setBoard ++ (stringify actual_board 8 ['A'..'H']))
                                         play mode board TwoW moves -- Game always starts with White
 
           
@@ -96,30 +98,31 @@ nextPlayer p = if p == OneB then TwoW else OneB
 -- Execute the read-eval-print loop for the game.
 play :: GameMode -> Board -> Player -> Maybe [String] -> IO ()       
 play mode b@(Board mp) p mvs =
-    do putStrLn (stringify b boardSize boardChars)
-       putStrLn ("\nPlayer " ++ (show p) ++ "'s turn.")
-       putStrLn ("Enter your move: ")
+    do putStr (setContext ("Player " ++ (show p) ++ "'s turn. Enter your move: "))
+       putStr setMove
        m <- case mvs of
                Nothing     -> getLine
-               Just (x:xs) -> do putStrLn ("Interpreting auto-move " ++ x)
+               Just (x:xs) -> do putStrLn (setError ("Interpreting auto-move " ++ x))
                                  threadDelay 1000000
                                  return x
-               Just []     -> do putStrLn ("Auto-Play over, ran out of moves. Shutting down...")
-                                 exitWith ExitSuccess -- Temp hack. Find a way to force a victory at this step.
+               Just []     -> do putStrLn (setError ("Auto-Play over, ran out of moves. Shutting down..."))
+                                 exitWith ExitSuccess
        fm <- case mvs of
                 Nothing     -> return Nothing
                 Just []     -> return (Just [])
                 Just (_:xs) -> return (Just xs)
-       case  parseMove m of
-         Nothing   -> do putStrLn ("Error parsing the move. Please use the following format: RowColumn-RowColumn, i.e. A1-C3")
-                         play mode b p Nothing -- Errors in auto switch to manual
+       case  parseMove (trim m) of
+         Nothing   -> do putStrLn (setError("PARSE ERROR. Please use the following format: RowCol-RowCol, i.e. A1-C3"))
+                         play mode b p Nothing -- Errors in auto, switch to manual
          Just move -> do case evalMove b p move mode of
-                           (Nothing, Just err) -> do putStrLn ("Invalid move: " ++ err)
+                           (Nothing, Just err) -> do putStr (setError ("Invalid move: " ++ err))
                                                      play mode b p Nothing -- Invalid moves in auto switch to manual
-                           (Just nb, Just vm)  -> do putStrLn (stringify nb boardSize boardChars)
-                                                     putStrLn ("Victory for Player " ++ (show p))
-                           (Just nb, Nothing)  -> do play mode nb (nextPlayer p) fm 
-                           _                   -> putStrLn ("An invalid evaluaton state has occurred.")
+                           (Just nb, Just vm)  -> do putStr (stringify nb boardSize boardChars)
+                                                     putStr (setContext ("Victory for Player " ++ (show p)))
+                           (Just nb, Nothing)  -> do putStr (refreshBoard nb)
+                                                     putStr (setError "")
+                                                     play mode nb (nextPlayer p) fm 
+                           _                   -> putStrLn (setError ("An invalid evaluaton state has occurred."))
 
 
 
@@ -132,6 +135,9 @@ splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn delim lst = foldr f [[]] lst
   where f c l@(x:xs) | c == delim = [] : l
                      | otherwise = (c : x) : xs
+
+trim :: String -> String
+trim s = filter (not.isSpace) s
 
 
 

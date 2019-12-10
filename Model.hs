@@ -111,6 +111,11 @@ getPiece (Board b) l = case Map.lookup l b of
                             Just (c, Nothing) -> Nothing
                             Just (c, Just p) -> Just p
 
+getTile :: Board -> Loc -> (Color, Maybe Piece)
+getTile (Board b) l = case Map.lookup l b of
+                         Nothing -> (White, Nothing)
+                         Just x  -> x
+
 getRank :: Board -> Loc -> Maybe Rank
 getRank (Board b) l = case Map.lookup l b of
                             Nothing -> Nothing
