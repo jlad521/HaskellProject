@@ -115,6 +115,9 @@ setMove = (setCursor 22 0) ++ clearLine ++ (setCursor 22 0)
 setBoard :: String
 setBoard = setCursor 0 0
 
+setHelp :: String
+setHelp = setCursor 26 0
+
 -- Perform an in-place update for all game tiles on the board.
 refreshBoard :: Board -> String
 refreshBoard b = concat (map func options)
