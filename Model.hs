@@ -218,28 +218,30 @@ adjacent (Board b) sl@(sl_r, sl_c) el rank p
             ne = (succ sl_r, sl_c +1)
             el_piece = getPiece (Board b) el 
 
+inBounds :: Loc -> Bool
+inBounds el@(row, col) = ord row >= ord 'A' && ord row <= ord 'H' && col >= 1 && col <= 8
 
 --ensures no hopping of same color, and returns location of a validly hopped piece
 validHop :: Board -> Loc -> Loc -> Rank -> Player -> (Bool,Maybe Loc)
 validHop (Board b) sl@(sl_r, sl_c) el rank p 
       | el_piece /= Nothing = (False, Nothing)
       | rank == Queen && p == OneB =  
-                          if      ssww == el && (sw_p == white_piece || sw_p == white_king) then (True, Just sw)
-                          else if ssee == el && (se_p == white_piece || se_p == white_king) then (True, Just se)
-                          else if nnww == el && (nw_p == white_piece || nw_p == white_king) then (True, Just nw)
-                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) then (True, Just ne)
+                          if      ssww == el && (sw_p == white_piece || sw_p == white_king) && inBounds el then (True, Just sw)
+                          else if ssee == el && (se_p == white_piece || se_p == white_king) && inBounds el then (True, Just se)
+                          else if nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
+                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) && inBounds el then (True, Just ne)
                           else (False, Nothing)
       | rank == Queen && p == TwoW = 
-                          if      ssww == el && (sw_p == black_piece || sw_p == black_king) then (True, Just sw)
-                          else if ssee == el && (se_p == black_piece || se_p == black_king) then (True, Just se)
-                          else if nnww == el && (nw_p == black_piece || nw_p == black_king) then (True, Just nw)
-                          else if nnee == el && (ne_p == black_piece || ne_p == black_king) then (True, Just ne)
+                          if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
+                          else if ssee == el && (se_p == black_piece || se_p == black_king) && inBounds el then (True, Just se)
+                          else if nnww == el && (nw_p == black_piece || nw_p == black_king) && inBounds el then (True, Just nw)
+                          else if nnee == el && (ne_p == black_piece || ne_p == black_king) && inBounds el then (True, Just ne)
                           else (False, Nothing)
-      | p == OneB     =   if      nnww == el && (nw_p == white_piece || nw_p == white_king) then (True, Just nw)
-                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) then (True, Just ne)
+      | p == OneB     =   if      nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
+                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) && inBounds el then (True, Just ne)
                           else (False, Nothing)
-      | p == TwoW     =   if      ssww == el && (sw_p == black_piece || sw_p == black_king) then (True, Just sw)
-                          else if ssee == el && (se_p == black_piece || se_p == black_king) then (True, Just se)
+      | p == TwoW     =   if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
+                          else if ssee == el && (se_p == black_piece || se_p == black_king) && inBounds el then (True, Just se)
                           else (False, Nothing)
       | otherwise = (False, Nothing)
   where ssww = (pred $ pred sl_r, sl_c -2)

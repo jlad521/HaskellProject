@@ -120,7 +120,7 @@ queenTestBoardW = let (Board m) = emptyBoard
 
 queenTestBoardB :: Board 
 queenTestBoardB = let (Board m) = emptyBoard
-                  in (Board (Map.adjust wm ('E', 7) m))
+                  in (Board (Map.adjust bm ('E', 7) m))
 --occupiedBoard (Board b) = Map.adjust wm ('D',4) b) 
 
 eatBoardQueenForwB :: Board 
@@ -189,11 +189,11 @@ manMoveTests =
 
              -- Check that inverse mode enforces a move
              evalMove inverseFailB OneB invFailMvB Inverse ~?= inverseFailRes,
-             evalMove inverseFailW TwoW invFailMvW Inverse ~?= inverseFailRes
+             evalMove inverseFailW TwoW invFailMvW Inverse ~?= inverseFailRes,
 
              --TODO: Become a queen.
-             --evalMove queenTestBoardB OneB moveFRQ Standard ~?= moveQueenResB, -- test if it produces queen for white player
-             --evalMove queenTestBoardW TwoW moveFRQ Standard ~?= moveQueenResW -- test if it produces queen for white player
+             evalMove queenTestBoardB OneB mvForQueenB Standard ~?= moveQueenResB, -- test if it produces queen for white player
+             evalMove queenTestBoardW TwoW mvForQueenW Standard ~?= moveQueenResW -- test if it produces queen for white player
              
            ]
     where badStart = (('F',3),('D',4))
@@ -220,6 +220,9 @@ manMoveTests =
          
           invFailMvB = (('A',1),('B',2))
           invFailMvW = (('H',8),('G',7))
+
+          mvForQueenW = (('F',2), ('E',1))
+          mvForQueenB = (('E',7), ('F',8))
 
 
 
