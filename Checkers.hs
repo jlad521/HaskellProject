@@ -10,7 +10,7 @@ module Checkers where
 
 import System.Environment
 import System.IO
-import System.Exit
+--import System.Exit
 import Control.Concurrent
 import Data.Char
 import Data.Maybe
@@ -32,7 +32,7 @@ boardChars :: [Char]
 boardChars = map chr [ord('A') .. ord('A') + boardSize - 1]
 
 usage :: String
-usage = "Usage: runhaskell Checkers {classic|inverse} [auto]"
+usage = "Usage: runhaskell Checkers {classic|inverse} [auto=filename]"
 
 defaultReplay :: String
 defaultReplay = "MyReplay.txt"
@@ -44,7 +44,7 @@ helpMsg = unlines [l1, l2, l3]
         l3 = "    -sr [target-file]\tSave replay (default: MyReplay.txt)"
 
 -- Parse command line arguments to the checkers game.
-parseArgs :: [String] -> Maybe (GameMode, Bool, Int)
+parseArgs :: [String] -> Maybe (GameMode, String, Int)
 parseArgs [m, s] = 
     do mv <- case map toLower m of
                "classic" -> return Standard
@@ -53,11 +53,11 @@ parseArgs [m, s] =
        sv <- case readMaybe s :: Maybe Int of
                Just i -> return i
                _      -> Nothing
-       return (mv, False, sv)
-parseArgs [m, ap, s] =
+       return (mv, "", sv)
+parseArgs [m, ('a':'u':'t':'o':'=':fname), s] =
     case parseArgs [m, s] of
       Nothing -> Nothing
-      Just (gm, _, bs) -> Just (gm, (ap == "auto"), bs)
+      Just (gm, _, bs) -> Just (gm, fname, bs)
 parseArgs _ = Nothing
 
 -- Parse command line arguments and dispatch the appropriate game loop.
@@ -67,9 +67,9 @@ main = do args <- getArgs
             Nothing               -> putStrLn usage
             Just (mode, ap, size) -> do board <- return actual_board
                                         putStrLn ("Welcome to " ++ (show mode) ++ " Checkers!")
-                                        moves <- if ap 
+                                        moves <- if ap /= ""
                                                  then do putStrLn "Auto-Playing a round using STDIN." 
-                                                         readAutoMoves
+                                                         readAutoMoves ap
                                                  else return Nothing
                                         putStrLn clear
                                         putStrLn (setBoard ++ (stringify actual_board 8 ['A'..'H']))
@@ -99,11 +99,11 @@ parseMove _                       = Nothing
     If any were read, hand them over to the game loop.
     Used by the autoplay feature.
 -}
-readAutoMoves :: IO (Maybe [String])
-readAutoMoves = do lines <- getContents
-                   case lines of
-                     "" -> return Nothing
-                     ls -> return (Just (filter (/="") (splitOn '\n' lines)))
+readAutoMoves :: String -> IO (Maybe [String])
+readAutoMoves fname = do lines <- readFile fname --getContents
+                         case lines of
+                           "" -> return Nothing
+                           ls -> return (Just (filter (/="") (splitOn '\n' lines)))
 
 -- Get next player to take a turn.
 nextPlayer :: Player -> Player
@@ -127,11 +127,12 @@ play mode b@(Board mp) p mvs replay =
                Just (x:xs) -> do putStrLn (setError ("Interpreting auto-move " ++ x))
                                  threadDelay 1000000
                                  return x
-               Just []     -> do putStrLn (setError ("Auto-Play over, ran out of moves. Shutting down..."))
-                                 exitWith ExitSuccess
+               Just []     -> do putStr (setError ("Auto-Play over, ran out of moves. You may continue playing."))
+                                 putStr setMove
+                                 getLine
        fm <- case mvs of
                 Nothing     -> return Nothing
-                Just []     -> return (Just [])
+                Just []     -> return Nothing --return (Just [])
                 Just (_:xs) -> return (Just xs)
        case  parseMove (trim m) of
          Nothing   -> do putStr (setError("PARSE ERROR. Please use the following format: RowCol-RowCol, i.e. A1-C3"))
