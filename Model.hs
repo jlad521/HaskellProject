@@ -101,9 +101,11 @@ updateBoard (ol, dl) (Board brd) = nb
     where tile :: Maybe (Color, Maybe Piece)
           tile = Map.lookup ol brd -- look up tile of origin
           nb   =  case tile of
-                    Just (c, Just p) -> Board (Map.adjust (\ tup -> (fst tup, Just p)) dl am)       -- Move piece from OL to DL
-                                          where am = Map.adjust (\ tup -> (fst tup, Nothing)) ol brd -- update OL to nothing
+                    Just (c, Just p) -> if snd dl == 1 then Board (Map.adjust (\ tup -> (fst tup,  Just(Piece TwoW Queen))) dl am) 
+                                        else if snd dl == 8 then Board (Map.adjust (\ tup -> (fst tup, Just(Piece OneB Queen))) dl am)
+                                        else Board (Map.adjust (\ tup -> (fst tup, Just p)) dl am)       -- Move piece from OL to DL
                     _                -> Board brd -- Something went wrong, cancel update.
+          am = Map.adjust (\ tup -> (fst tup, Nothing)) ol brd -- update OL to nothing
 
 getPiece :: Board -> Loc -> Maybe Piece
 getPiece (Board b) l = case Map.lookup l b of
