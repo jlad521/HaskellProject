@@ -113,7 +113,8 @@ nextPlayer p = if p == OneB then TwoW else OneB
 	Save a given sequence of moves to a file as a replay.
 -}
 saveReplay :: [Move] -> String -> IO ()
-saveReplay = undefined
+saveReplay ms fname = writeFile fname (unlines (map format (reverse ms)))
+    where format ((c1, r1), (c2, r2)) = [c1, intToDigit r1, '-', c2, intToDigit r2]
 
 
 -- Execute the read-eval-print loop for the game.
@@ -138,6 +139,7 @@ play mode b@(Board mp) p mvs replay =
          Just Exit -> do putStrLn clear
                          putStrLn (setError ("Exit command received. Shutting down..."))
          Just (SaveReplay fname) -> do saveReplay replay fname
+                                       putStr (setError "Replay saved to " ++ fname)
                                        play mode b p Nothing replay
          Just (Action move) -> do case evalMove b p move mode of
                                     (Nothing, Just err) -> do putStr (setError ("Invalid move: " ++ err))
