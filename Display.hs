@@ -90,6 +90,43 @@ blackBG = esc : "[40m"
 setCursor :: Int -> Int -> String
 setCursor line col = [esc] ++ "[" ++ (show line) ++ ";" ++ (show col) ++ "H"
 
+-- Generate an escape sequence to position a given value at a given location.
+setTile :: Maybe Piece -> Loc -> String
+setTile p (col, row) = (setCursor (1 + (2 * row)) (1 + (4 * colOffset))) ++ toPut
+    where colOffset = (ord col) - 64
+          toPut = case p of
+                    Nothing    -> " "
+                    Just piece -> pts piece
+
+clearLine :: String
+clearLine = take 80 (repeat ' ')
+
+-- Set the contents of the contextual message area
+setContext :: String -> String
+setContext l = (setCursor 20 0) ++ clearLine ++ (setCursor 20 0) ++ l
+
+setError :: String -> String
+setError e = (setCursor 21 0) ++ clearLine ++ (setCursor 21 0) ++ e
+
+-- Switch the cursor to move input area
+setMove :: String 
+setMove = (setCursor 22 0) ++ clearLine ++ (setCursor 22 0)
+
+setBoard :: String
+setBoard = setCursor 0 0
+
+setHelp :: String
+setHelp = setCursor 26 0
+
+-- Perform an in-place update for all game tiles on the board.
+refreshBoard :: Board -> String
+refreshBoard b = concat (map func options)
+    where options = [(c, r) | c <- ['A'..'H'], r <- [1..8]]
+          func loc = case getTile b loc of
+                        (White, _) -> ""
+                        (Black, p) -> setTile p loc
+                        
+
 
 {- DEBUGGING -}
 
