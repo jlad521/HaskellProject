@@ -10,7 +10,6 @@ module Checkers where
 
 import System.Environment
 import System.IO
---import System.Exit
 import Control.Concurrent
 import Data.Char
 import Data.Maybe
@@ -20,7 +19,7 @@ import Data.List
 import Display
 import Model
 
-data Command = Action Move | Exit | SaveReplay String
+data Command = Action Move | Exit | SaveReplay String | Undo
 
 
 
@@ -32,16 +31,23 @@ boardChars :: [Char]
 boardChars = map chr [ord('A') .. ord('A') + boardSize - 1]
 
 usage :: String
-usage = "Usage: runhaskell Checkers {classic|inverse} [auto=filename]"
+usage = "Usage: runhaskell Checkers {classic|inverse} [auto=file-name]"
 
 defaultReplay :: String
 defaultReplay = "MyReplay.txt"
 
 helpMsg :: String
-helpMsg = unlines [l1, l2, l3]
-  where l1 = "You may enter any of the following commands instead of a move at any time:"
-        l2 = "    -q\t\t\tExit the program"
-        l3 = "    -sr [target-file]\tSave replay (default: MyReplay.txt)"
+helpMsg = unlines [
+    "You may enter any of the following commands instead of a move at any time:", 
+    "    -q\t\t\tExit the program",
+    "    -sr [target-file]\tSave replay (default: MyReplay.txt)",
+    "    -b\t\t\tUndo the previous move (back)",
+    "",
+    "Cheat Sheet:",
+    "    " ++ wMan ++ " - White Man",
+    "    " ++ wQueen ++ " - White Queen",
+    "    " ++ bMan ++ " - Black Man",
+    "    " ++ bQueen ++ " - Black Queen"]
 
 -- Parse command line arguments to the checkers game.
 parseArgs :: [String] -> Maybe (GameMode, String, Int)
@@ -65,16 +71,17 @@ main :: IO ()
 main = do args <- getArgs
           case parseArgs (args ++ [show boardSize]) of -- hack until board is dynamic
             Nothing               -> putStrLn usage
-            Just (mode, ap, size) -> do board <- return actual_board
-                                        putStrLn ("Welcome to " ++ (show mode) ++ " Checkers!")
-                                        moves <- if ap /= ""
-                                                 then do putStrLn "Auto-Playing a round using STDIN." 
-                                                         readAutoMoves ap
-                                                 else return Nothing
-                                        putStrLn clear
-                                        putStrLn (setBoard ++ (stringify actual_board 8 ['A'..'H']))
-                                        putStr (setHelp ++ helpMsg)
-                                        play mode board TwoW moves [] -- Game always starts with White
+            Just (mode, ap, size) -> 
+              do board <- return actual_board
+                 putStrLn ("Welcome to " ++ (show mode) ++ " Checkers!")
+                 moves <- if ap /= ""
+                          then do putStrLn "Auto-Playing a round using STDIN."
+                                  readAutoMoves ap
+                          else return Nothing
+                 putStrLn clear
+                 putStrLn (setBoard ++ (stringify actual_board 8 ['A'..'H']))
+                 putStr (setHelp ++ helpMsg)
+                 play mode board TwoW moves [] [] -- Game always starts with White
 
           
 -- Parse a given string into a move.
@@ -92,6 +99,7 @@ parseMove [rs1, cs1, '-', rs2, cs2] =
 parseMove "-q"                    = Just Exit
 parseMove ('-':'s':'r':' ':fname) = Just (SaveReplay fname)
 parseMove "-sr"                   = Just (SaveReplay defaultReplay)
+parseMove "-b"                    = Just Undo
 parseMove _                       = Nothing
 
 {-
@@ -118,8 +126,8 @@ saveReplay ms fname = writeFile fname (unlines (map format (reverse ms)))
 
 
 -- Execute the read-eval-print loop for the game.
-play :: GameMode -> Board -> Player -> Maybe [String] -> [Move] -> IO ()       
-play mode b@(Board mp) p mvs replay =
+play :: GameMode -> Board -> Player -> Maybe [String] -> [Move] -> [Board] -> IO ()       
+play mode b@(Board mp) p mvs replay pbs =
     do putStr (setContext ("Player " ++ (show p) ++ "'s turn. Enter your move: "))
        putStr setMove
        m <- case mvs of
@@ -132,25 +140,32 @@ play mode b@(Board mp) p mvs replay =
                                  getLine
        fm <- case mvs of
                 Nothing     -> return Nothing
-                Just []     -> return Nothing --return (Just [])
+                Just []     -> return Nothing
                 Just (_:xs) -> return (Just xs)
        case  parseMove (trim m) of
          Nothing   -> do putStr (setError("PARSE ERROR. Please use the following format: RowCol-RowCol, i.e. A1-C3"))
-                         play mode b p Nothing replay -- Errors in auto, switch to manual
+                         play mode b p Nothing replay pbs-- Errors in auto, switch to manual
          Just Exit -> do putStrLn clear
                          putStrLn (setError ("Exit command received. Shutting down..."))
          Just (SaveReplay fname) -> do saveReplay replay fname
                                        putStr (setError "Replay saved to " ++ fname)
-                                       play mode b p Nothing replay
-         Just (Action move) -> do case evalMove b p move mode of
-                                    (Nothing, Just err) -> do putStr (setError ("Invalid move: " ++ err))
-                                                              play mode b p Nothing replay -- Invalid moves in auto, switch to manual
-                                    (Just nb, Just vm)  -> do putStr (stringify nb boardSize boardChars)
-                                                              putStr (setContext ("Victory for Player " ++ (show p)))
-                                    (Just nb, Nothing)  -> do putStr (refreshBoard nb)
-                                                              putStr (setError "")
-                                                              play mode nb (nextPlayer p) fm (move : replay)
-                                    _                   -> putStr (setError ("An invalid evaluaton state has occurred."))
+                                       play mode b p Nothing replay pbs
+         Just Undo               -> case pbs of
+                                      []          ->  do putStr (setError ("No more moves to undo!"))
+                                                         play mode b p Nothing replay []
+                                      (pb:pastbs) ->  do putStr (setError "Previous move undone.")
+                                                         putStr (refreshBoard pb)
+                                                         play mode pb p Nothing (tail replay) pastbs
+         Just (Action move) -> 
+           do case evalMove b p move mode of
+                (Nothing, Just err) -> do putStr (setError ("Invalid move: " ++ err))
+                                          play mode b p Nothing replay pbs -- Invalid moves in auto, switch to manual
+                (Just nb, Just vm)  -> do putStr (stringify nb boardSize boardChars)
+                                          putStr (setContext ("Victory for Player " ++ (show p)))
+                (Just nb, Nothing)  -> do putStr (refreshBoard nb)
+                                          putStr (setError "")
+                                          play mode nb (nextPlayer p) fm (move : replay) (b : pbs)
+                _                   -> putStr (setError ("An invalid evaluaton state has occurred."))
 
 
 

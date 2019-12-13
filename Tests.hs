@@ -7,7 +7,6 @@
 module Tests where
 
 import Test.HUnit
-import Checkers
 import Model
 import Display
 import Data.Map.Strict as Map
