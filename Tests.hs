@@ -144,55 +144,54 @@ manMoveTests :: Test
 manMoveTests =
   TestList [ 
              -- Invalid start location
-             evalMove manBoardB OneB badStart Standard    ~?= invalidStartRes,
-             evalMove manBoardW TwoW badStart Standard    ~?= invalidStartRes,
+             evalMove manBoardB OneB badStart Standard      ~?= invalidStartRes,
+             evalMove manBoardW TwoW badStart Standard      ~?= invalidStartRes,
 
              -- Black man basic movements
-             evalMove manBoardB OneB moveBL Standard      ~?= moveFRresB, -- Test 1: Move 1 tile forward right. EXPECT: Success
-             evalMove manBoardB OneB moveBR Standard      ~?= moveFLresB, -- Test 2: Move 1 tile forward left.    EXPECT: Success
-             evalMove manBoardB OneB moveFL Standard      ~?= invalidEnd, -- Test 3: Move 1 tile back right.      EXPECT: Fail: no backwards move
-             evalMove manBoardB OneB moveFR Standard      ~?= invalidEnd, -- Test 4: Move 1 tile back left.     EXPECT: Fail: no backwards move
-             evalMove manBoardB  OneB moveFL2 Standard    ~?= invalidEnd, -- Test 5: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
-             evalMove manBoardB  OneB moveFR2 Standard    ~?= invalidEnd, -- Test 6: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
-             evalMove edgeBoardB OneB moveFROOBB Standard ~?= invalidEnd, -- Test 7: Move FR out of bounds.  EXPECT: Fail: Out of bounds
-             evalMove edgeBoardB OneB moveFLOOBB Standard ~?= invalidEnd,  -- Test 8: Move FL out of bounds.  EXPECT: Fail: Out of bounds
+             evalMove manBoardB OneB moveBL Standard        ~?= moveFRresB, -- Test 1: Move 1 tile forward right. EXPECT: Success
+             evalMove manBoardB OneB moveBR Standard        ~?= moveFLresB, -- Test 2: Move 1 tile forward left.    EXPECT: Success
+             evalMove manBoardB OneB moveFL Standard        ~?= invalidEnd, -- Test 3: Move 1 tile back right.      EXPECT: Fail: no backwards move
+             evalMove manBoardB OneB moveFR Standard        ~?= invalidEnd, -- Test 4: Move 1 tile back left.     EXPECT: Fail: no backwards move
+             evalMove manBoardB  OneB moveFL2 Standard      ~?= invalidEnd, -- Test 5: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
+             evalMove manBoardB  OneB moveFR2 Standard      ~?= invalidEnd, -- Test 6: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
+             evalMove edgeBoardB OneB moveFROOBB Standard   ~?= invalidEnd, -- Test 7: Move FR out of bounds.  EXPECT: Fail: Out of bounds
+             evalMove edgeBoardB OneB moveFLOOBB Standard   ~?= invalidEnd,  -- Test 8: Move FL out of bounds.  EXPECT: Fail: Out of bounds
 
              -- White man basic movements 
-             evalMove manBoardW TwoW moveFR Standard     ~?= moveFRresW, -- Test 1: Move 1 tile forward right.	EXPECT: Success
-             evalMove manBoardW TwoW moveFL Standard     ~?= moveFLresW, -- Test 2: Move 1 tile forward left.		EXPECT: Success
-             evalMove manBoardW TwoW moveBR Standard     ~?= invalidEnd, -- Test 3: Move 1 tile back right.  		EXPECT: Fail: no backwards move
-             evalMove manBoardW TwoW moveBL Standard     ~?= invalidEnd, -- Test 4: Move 1 tile back left.  		EXPECT: Fail: no backwards move
-             evalMove manBoardW TwoW moveFR2 Standard    ~?= invalidEnd, -- Test 5: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
-             evalMove manBoardW TwoW moveFL2 Standard    ~?= invalidEnd, -- Test 6: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
-             evalMove edgeBoardW TwoW moveFROOB Standard ~?= invalidEnd, -- Test 7: Move FR out of bounds.  EXPECT: Fail: Out of bounds
-             evalMove edgeBoardW TwoW moveFLOOB Standard ~?= invalidEnd,  -- Test 8: Move FL out of bounds.  EXPECT: Fail: Out of bounds
+             evalMove manBoardW TwoW moveFR Standard        ~?= moveFRresW, -- Test 1: Move 1 tile forward right.	EXPECT: Success
+             evalMove manBoardW TwoW moveFL Standard        ~?= moveFLresW, -- Test 2: Move 1 tile forward left.		EXPECT: Success
+             evalMove manBoardW TwoW moveBR Standard        ~?= invalidEnd, -- Test 3: Move 1 tile back right.  		EXPECT: Fail: no backwards move
+             evalMove manBoardW TwoW moveBL Standard        ~?= invalidEnd, -- Test 4: Move 1 tile back left.  		EXPECT: Fail: no backwards move
+             evalMove manBoardW TwoW moveFR2 Standard       ~?= invalidEnd, -- Test 5: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
+             evalMove manBoardW TwoW moveFL2 Standard       ~?= invalidEnd, -- Test 6: Move 2 tiles forward right.    EXPECT: Fail: > 1 tile
+             evalMove edgeBoardW TwoW moveFROOB Standard    ~?= invalidEnd, -- Test 7: Move FR out of bounds.  EXPECT: Fail: Out of bounds
+             evalMove edgeBoardW TwoW moveFLOOB Standard    ~?= invalidEnd,  -- Test 8: Move FL out of bounds.  EXPECT: Fail: Out of bounds
 
-            
              -- Move to destination occupied by Man.
-             evalMove occupiedBoardB OneB moveBR Standard ~?= invalidEnd,
-             evalMove occupiedBoardW TwoW moveFR2 Standard ~?= invalidEnd,
+             evalMove occupiedBoardB OneB moveBR Standard   ~?= invalidEnd,
+             evalMove occupiedBoardW TwoW moveFR2 Standard  ~?= invalidEnd,
 
              
              --TODO: Hop over a man of opposite color and eat.
-             evalMove eatBoardB OneB moveFL2B Standard ~?= eatBoardResB,
-             evalMove eatBoardW TwoW moveFR2 Standard  ~?= eatBoardResW,
-
+             evalMove eatBoardB OneB moveFL2B Standard      ~?= eatBoardResB,
+             evalMove eatBoardW TwoW moveFR2 Standard       ~?= eatBoardResW,
+  
              --TODO: Hop over piece in wrong direciton as man (should fail)
              evalMove wrongDirEatB OneB moveBadDirB Standard ~?= invalidEnd,
              evalMove wrongDirEatW TwoW moveBadDirW Standard ~?= invalidEnd,
 
              --TODO: Fail to hop over a man of same color.
-             evalMove eatBoardFailB OneB moveFL2B Standard ~?= invalidEnd,
-             evalMove eatBoardFailW TwoW moveFR2 Standard ~?= invalidEnd,
+             evalMove eatBoardFailB OneB moveFL2B Standard   ~?= invalidEnd,
+             evalMove eatBoardFailW TwoW moveFR2 Standard    ~?= invalidEnd,
 
              --TODO: test if you can mkae multiple jumps in one turn! 
 
              -- Check that inverse mode enforces a move
-             evalMove inverseFailB OneB invFailMvB Inverse ~?= inverseFailRes,
-             evalMove inverseFailW TwoW invFailMvW Inverse ~?= inverseFailRes,
+             evalMove inverseFailB OneB invFailMvB Inverse   ~?= inverseFailRes,
+             evalMove inverseFailW TwoW invFailMvW Inverse   ~?= inverseFailRes,
 
              --TODO: Become a queen.
-             evalMove queenTestBoardB OneB mvForQueenB Standard ~?= moveQueenResB, -- test if it produces queen for white player
+             evalMove queenTestBoardB OneB mvForQueenB Standard   ~?= moveQueenResB, -- test if it produces queen for white player
              evalMove queenTestBoardW TwoW mvForQueenW Standard ~?= moveQueenResW -- test if it produces queen for white player
              
            ]
@@ -224,9 +223,6 @@ manMoveTests =
           mvForQueenW = (('F',2), ('E',1))
           mvForQueenB = (('E',7), ('F',8))
 
-
-
-
 queenMoveTests :: Test
 queenMoveTests = 
   TestList [
@@ -235,20 +231,36 @@ queenMoveTests =
           --necessary??
             
              -- Hop over over man in normal direction 
-             evalMove eatBoardQueenForwB OneB queenMvSE Standard   ~?= queenEatForwResB,
+             evalMove eatBoardQueenForwB OneB queenMvSE Standard  ~?= queenEatForwResB,
              evalMove eatBoardQueenForwW TwoW queenMvNE Standard  ~?= queenEatForwResW,
 
              -- Hop over man in opposite direction 
              evalMove eatBoardQueenBackwB OneB queenMvNE Standard ~?= queenEatBkwrdResB,
-             evalMove eatBoardQueenBackwW TwoW queenMvW Standard  ~?= queenEatBkwrdResW
+             evalMove eatBoardQueenBackwW TwoW queenMvW  Standard ~?= queenEatBkwrdResW
 
-
-            
            ]
   where 
        queenMvSE = (('E',3),('C',5))
        queenMvNE = (('E',5),('C',3))
        queenMvW  = (('C',3),('E',5))
+
+
+endGameTests :: Test
+endGameTests =
+  TestList [
+
+            evalMove eatBoardB OneB winMvB Standard ~?= winResB,
+            evalMove eatBoardW TwoW winMvW Standard ~?= winResW,
+
+            evalMove eatBoardB OneB winMvB Inverse ~?= winResB,
+            evalMove eatBoardW TwoW winMvW Inverse ~?= winResW
+
+
+   
+  ]
+  where winMvB = (('D',4),('F',6))
+        winMvW = (('D',4),('F',2))
+
 
 {- TEST RESULTS -}
 
@@ -311,13 +323,23 @@ queenEatBkwrdResB = let (Board m) = emptyBoard
 queenEatBkwrdResW :: (Maybe Board, Maybe String)
 queenEatBkwrdResW = let (Board m) = emptyBoard
                    in (Just (Board (Map.adjust wq ('E', 5) m)), Nothing)
+
+winResW :: (Maybe Board, Maybe String)
+winResW = let (Board m) = emptyBoard
+          in (Just (Board (Map.adjust wm ('F', 2) m)), Just("Victory; game over"))
+
+winResB :: (Maybe Board, Maybe String)
+winResB = let (Board m) = emptyBoard
+                   in (Just (Board (Map.adjust wm ('F', 6) m)), Just("Victory; game over"))
+
+
 {- ##################### -}
 
 -- Carry out all the tests.
 main :: IO ()
 main = do runTestTT manMoveTests
           runTestTT queenMoveTests
-          --runTestTT winTests
+          runTestTT endGameTests
           return ()
 
 
