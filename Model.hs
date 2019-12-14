@@ -299,11 +299,16 @@ validStart :: Board -> Loc -> Player -> Bool
 validStart (Board b) l p = case Map.lookup(l) b of
                              Just (Black, Just (Piece player _)) -> player == p -- Only valid start is an existing piece belonging to player.
                              _                                   -> False
-
+evalMove :: Board -> Player -> [Move] -> GameMode -> (Maybe Board, Maybe String)
+evalMove b _ [] _    = (Just b, Just "error on evalMove list")
+evalMove b p [mv] gm = evalSingleMove b p mv gm 
+evalMove b p [m:mv] gm = case evalSingleMove b p m gm of
+                               (Just b, Nothing) -> evalMove b p mv gm 
+                               (Nothing, Just e) -> (Nothing, Just e)
 -- core logic function. Verifies that a move is valid, and produces 
 -- (updated Board, nothing) if valid; (nothing, "errorMessage") otherwise
-evalMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
-evalMove b p mv@(startLoc, endLoc) gm
+evalSingleMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
+evalSingleMove b p mv@(startLoc, endLoc) gm
     | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
     | not $ valid_move     = (Nothing, Just "Invalid ending location. Please try again.")
     | gm == Inverse && (checkPossibleHops b p && not isHop)  = (Nothing, Just "Must take available hop move. Please try again.")
