@@ -164,7 +164,7 @@ play mode b@(Board mp) p mvs replay pbs =
                --                          putStr (setContext ("Victory for Player " ++ (show p)))
                 (Just nb, Nothing)  -> do putStr (refreshBoard nb)
                                           putStr (setError "")
-                                          if Model.isWin nb p mode then putStr (setContext ("Victory for Player " ++ (show p)))
+                                          if Model.isWin nb p mode || Model.isWin nb (nextPlayer p) mode then putStr (setContext ("Victory for Player " ++ (show p)))
                                           --else if Model.checkPossibleHops b p then play mode nb p fm (move : replay) (b : pbs)
                                           else play mode nb (nextPlayer p) fm (move : replay) (b : pbs)
                 _                   -> putStr (setError ("An invalid evaluaton state has occurred."))

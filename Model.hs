@@ -1,3 +1,10 @@
+{-
+  CS 641: Checkers Project
+  Checkers Logic functions
+
+  @authors: Sergey Goldobin, Justin Lad
+  12/13/2019
+-}
 
 module Model where
 
@@ -72,6 +79,7 @@ white_piece = Just (Black, Just(Piece TwoW Man))
 black_king  = Just (Black, Just(Piece OneB Queen))
 white_king  = Just (Black, Just(Piece TwoW Queen))
 
+-- adds pieces of appropriate color to the previously empty Board
 addPieces :: Board -> Board
 addPieces (Board pos) = aux (Board pos) 'H' 8
 
@@ -96,6 +104,7 @@ addPieces (Board pos) = aux (Board pos) 'H' 8
                       empty_square = aux (Board (Map.insert (c,row) (Black, Nothing ) brd )) (pred c) row 
                       next         = aux (Board brd) (pred c) row
 
+-- updates the board with the verified valid move, producing the updated board
 updateBoard :: Move -> Board -> Board 
 updateBoard (ol, dl) (Board brd) = nb
     where tile :: Maybe (Color, Maybe Piece)
@@ -127,23 +136,23 @@ getRank (Board b) l = case Map.lookup l b of
 removePiece :: Board -> Loc -> Board
 removePiece (Board b) (c,i) = (Board (Map.insert (c,i) (Black, Nothing) b))
 
-checkPossibleHops :: Board -> Player -> Bool
-checkPossibleHops (Board b) pl = aux (Map.toList b) pl
-  where aux []     _ = False 
-        aux (t:ts) p = possibleHop (Board b) l p || aux ts p 
-            where l  = fst t 
 
-noMovesLeft :: Board -> Player -> Bool
-noMovesLeft (Board b) p = aux (Map.toList b) p 
-  where aux [] _      = True 
-        aux (t:ts) p' = ( possibleHop (Board b) l p || possibleAdjacent (Board b) l p ) && aux ts p'
-            where l  = fst t 
+-- handles inverse game mode, no need for inverting logic when called in inverse mode
+isWin :: Board -> Player -> GameMode -> Bool
+isWin (Board b) p m = noPiecesLeft (Board b) p m || noMovesLeft (Board b) p
 
+
+-- we decided not to implement ties because they are so rare and difficult to compute
+-- see http://www.darkfish.com/checkers/rules.html
+isTie :: Board -> Bool
+isTie = undefined
+
+-- checks if a player is out of pieces to check 
 noPiecesLeft :: Board -> Player -> GameMode -> Bool 
 noPiecesLeft (Board b) p m = aux (Map.toList b) p m 
   where aux []     _ _  = True  
         aux (t:ts) p' m'  = if snd t == valid_man || snd t == valid_queen then False
-                          else aux ts p' m'
+                            else aux ts p' m'
 
         player_chk = if m == Standard && p == OneB then TwoW
                      else if m == Standard && p == TwoW then OneB
@@ -151,16 +160,22 @@ noPiecesLeft (Board b) p m = aux (Map.toList b) p m
         valid_man   =  (Black, Just(Piece player_chk Man))
         valid_queen =  (Black, Just(Piece player_chk Queen)) 
 
---handles inverse game mode, no need for inverting logic when called in inverse mode
-isWin :: Board -> Player -> GameMode -> Bool
-isWin (Board b) p m = noPiecesLeft (Board b) p m || noMovesLeft (Board b) p
 
+-- checks if there are any moves left for isWin
+noMovesLeft :: Board -> Player -> Bool
+noMovesLeft (Board b) p = aux (Map.toList b) p 
+  where aux [] _      = True 
+        aux (t:ts) p' = ( possibleHop (Board b) l p || possibleAdjacent (Board b) l p ) && aux ts p'
+            where l  = fst t 
 
---Hmm... this is tricky to implement, see http://www.darkfish.com/checkers/rules.html
-isTie :: Board -> Bool
-isTie = undefined
+-- checks if there's a possible hop for inverse 
+checkPossibleHops :: Board -> Player -> Bool
+checkPossibleHops (Board b) pl = aux (Map.toList b) pl
+  where aux []     _ = False 
+        aux (t:ts) p = possibleHop (Board b) l p || aux ts p 
+            where l  = fst t 
 
-
+-- checks if there's a possible adjacent move for isWin. 
 possibleAdjacent :: Board -> Loc -> Player -> Bool
 possibleAdjacent (Board b) sl@(sl_r, sl_c) p=
         case getPiece (Board b) sl of 
@@ -178,7 +193,7 @@ possibleAdjacent (Board b) sl@(sl_r, sl_c) p=
         ne = (succ sl_r, sl_c +1)
 
 
-
+-- checks if there's a possible hop, for inverse mode
 possibleHop :: Board -> Loc -> Player -> Bool
 possibleHop (Board b) sl@(sl_r, sl_c) p = 
         case getPiece (Board b) sl of
@@ -196,7 +211,7 @@ possibleHop (Board b) sl@(sl_r, sl_c) p =
         nnee = (succ $ succ sl_r, sl_c +2)
 
 
-
+-- checks if adjacent square is a valid move
 adjacent :: Board -> Loc -> Loc -> Rank -> Player -> Bool 
 adjacent (Board b) sl@(sl_r, sl_c) el rank p
           | el_piece /= Nothing = False 
@@ -279,17 +294,14 @@ validEnd brd@(Board b) (sl, el) p =
                   _                            -> Nothing
         
 
-
-
-{-
-    Validate start location of a move.
--}
+-- validates start location of a move.
 validStart :: Board -> Loc -> Player -> Bool
 validStart (Board b) l p = case Map.lookup(l) b of
                              Just (Black, Just (Piece player _)) -> player == p -- Only valid start is an existing piece belonging to player.
                              _                                   -> False
 
-
+-- core logic function. Verifies that a move is valid, and produces 
+-- (updated Board, nothing) if valid; (nothing, "errorMessage") otherwise
 evalMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
 evalMove b p mv@(startLoc, endLoc) gm
     | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
@@ -298,14 +310,5 @@ evalMove b p mv@(startLoc, endLoc) gm
     | otherwise = case end_loc of 
                     Nothing -> (Just (updateBoard mv b), Nothing)
                     Just l  -> (Just (updateBoard mv (removePiece b l)), Nothing)
-  --where validEndResult = validEnd b mv p                                                      
   where (valid_move, isHop, end_loc) = validEnd b mv p   
 
-{-
-Model TODO:
-  - eventually add GameMode to the Board object 
-
-  - maaaybe the tie function 
-
-  - testing; so far very lightly tested
--}
