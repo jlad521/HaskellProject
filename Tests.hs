@@ -185,6 +185,7 @@ manMoveTests =
 
              --TODO: test if you can mkae multiple jumps in one turn! 
 
+
              -- Check that inverse mode enforces a move
              evalMove inverseFailB OneB invFailMvB Inverse   ~?= inverseFailRes,
              evalMove inverseFailW TwoW invFailMvW Inverse   ~?= inverseFailRes,
@@ -243,7 +244,7 @@ queenMoveTests =
        queenMvNE = (('E',5),('C',3))
        queenMvW  = (('C',3),('E',5))
 
-
+{-
 endGameTests :: Test
 endGameTests =
   TestList [
@@ -251,16 +252,15 @@ endGameTests =
             evalMove eatBoardB OneB winMvB Standard ~?= winResB,
             evalMove eatBoardW TwoW winMvW Standard ~?= winResW,
 
-            evalMove eatBoardB OneB winMvB Inverse ~?= winResB,
-            evalMove eatBoardW TwoW winMvW Inverse ~?= winResW
-
+            evalMove eatBoardB OneB winMvB Inverse  ~?= winResB,
+            evalMove eatBoardW TwoW winMvW Inverse  ~?= winResW
 
    
   ]
   where winMvB = (('D',4),('F',6))
         winMvW = (('D',4),('F',2))
 
-
+-}
 {- TEST RESULTS -}
 
 
@@ -338,7 +338,7 @@ winResB = let (Board m) = emptyBoard
 main :: IO ()
 main = do runTestTT manMoveTests
           runTestTT queenMoveTests
-          runTestTT endGameTests
+         -- runTestTT endGameTests
           return ()
 
 

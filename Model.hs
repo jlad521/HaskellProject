@@ -280,7 +280,6 @@ validEnd brd@(Board b) (sl, el) p =
         
 
 
---hopResult = validHop b sl el rank p --hmmmm, rank is out of scope in this clause due to the case statement. Let instead? future work
 
 {-
     Validate start location of a move.
@@ -292,7 +291,7 @@ validStart (Board b) l p = case Map.lookup(l) b of
 
 
 evalMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
-evalMove b p mv@(startLoc, endLoc) gm 
+evalMove b p mv@(startLoc, endLoc) gm
     | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
     | not $ valid_move     = (Nothing, Just "Invalid ending location. Please try again.")
     | gm == Inverse && (checkPossibleHops b p && not isHop)  = (Nothing, Just "Must take available hop move. Please try again.")
@@ -300,8 +299,7 @@ evalMove b p mv@(startLoc, endLoc) gm
                     Nothing -> (Just (updateBoard mv b), Nothing)
                     Just l  -> (Just (updateBoard mv (removePiece b l)), Nothing)
   --where validEndResult = validEnd b mv p                                                      
-  where (valid_move, isHop, end_loc) = validEnd b mv p                                                      
-
+  where (valid_move, isHop, end_loc) = validEnd b mv p   
 
 {-
 Model TODO:

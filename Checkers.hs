@@ -133,7 +133,7 @@ play mode b@(Board mp) p mvs replay pbs =
        m <- case mvs of
                Nothing     -> getLine
                Just (x:xs) -> do putStrLn (setError ("Interpreting auto-move " ++ x))
-                                 threadDelay 1000000
+                                 threadDelay 10000
                                  return x
                Just []     -> do putStr (setError ("Auto-Play over, ran out of moves. You may continue playing."))
                                  putStr setMove
@@ -152,21 +152,23 @@ play mode b@(Board mp) p mvs replay pbs =
                                        play mode b p Nothing replay pbs
          Just Undo               -> case pbs of
                                       []          ->  do putStr (setError ("No more moves to undo!"))
-                                                         play mode b p Nothing replay []
+                                                         play mode b (nextPlayer p) Nothing replay []
                                       (pb:pastbs) ->  do putStr (setError "Previous move undone.")
                                                          putStr (refreshBoard pb)
-                                                         play mode pb p Nothing (tail replay) pastbs
+                                                         play mode pb (nextPlayer p) Nothing (tail replay) pastbs
          Just (Action move) -> 
            do case evalMove b p move mode of
                 (Nothing, Just err) -> do putStr (setError ("Invalid move: " ++ err))
                                           play mode b p Nothing replay pbs -- Invalid moves in auto, switch to manual
-                (Just nb, Just vm)  -> do putStr (stringify nb boardSize boardChars)
-                                          putStr (setContext ("Victory for Player " ++ (show p)))
+               -- (Just nb, Just vm)  -> do putStr (stringify nb boardSize boardChars)
+               --                          putStr (setContext ("Victory for Player " ++ (show p)))
                 (Just nb, Nothing)  -> do putStr (refreshBoard nb)
                                           putStr (setError "")
-                                          play mode nb (nextPlayer p) fm (move : replay) (b : pbs)
+                                          if Model.isWin nb p mode then putStr (setContext ("Victory for Player " ++ (show p)))
+                                          --else if Model.checkPossibleHops b p then play mode nb p fm (move : replay) (b : pbs)
+                                          else play mode nb (nextPlayer p) fm (move : replay) (b : pbs)
                 _                   -> putStr (setError ("An invalid evaluaton state has occurred."))
-
+  
 
 
 

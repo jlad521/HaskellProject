@@ -80,6 +80,16 @@ me mode and autoplay.
 
 ###### Model
 TODO
+This module contains the core game logic. 
+
+* newBoard          -- creates a new checkers Board with all the pieces on it
+* updateBoard       -- performs a valid Move on the Board, producing updated board
+* checkPossibleHops -- checks if there's an available hop for inverse mode. [also used for doubleHops?]
+* isWin             -- checks if a player is out of pieces or they don't have an possible move. 
+* validHop          -- checks if a move is valid
+* validStart        -- checks if a move has a valid starting location
+* validEnd          -- checks if a move has a valid ending location
+* evalMove          -- computes a move by checking validStart, validEnd, isWin, if a hop is available in inverse mode, or updates the Board with the input move. 
 
 ###### Display
 This module contains all the functionality related to visualization and cursor 
@@ -96,20 +106,20 @@ clear it, and place new content.
 This module serves to validate the correctness of the underlying game logic and 
 is only dependent on Model.hs. We painstakingly enumerated all interesting cases
 possible and created test scenarios to verify correct behavior. This module has
-a main(), and can be run individually.
+a main(), or can be run individually.
 
 ## Haskell Dependencies
 The project does not require any additional libraries can can be compiled with
 GHC and run as is.
 
 ## Debriefing (Work Done & Lessons Learned)
-TODO
+
+Work Done:
+Building a checkers game in Haskell was a fairly straightforward process with good upfront planning.  We used Haskell's data type to logically organize the many components that make up the game a checkers. We used the model-view-control pattern to seperate the game logic into distinct components.  We were even able to achieve a sleek cursor controlled update to the terminal to avoid constantly printing out new game boards. Overall, this was fun to complete in Haskell, and may have been even more challenging in an imperative language. 
 
 
-
-
-
-
+Lessons Learned: 
+Developing the test suite would have generally been better to develop sooner in the process to verify Model.hs logic. Instead, it was used as more of an afterthought to ensure game properties held.  The addition of loading and storing replays was another great feature for testing, because it easily enabled storing game states with edge cases for testing. We primarily relied upon replays for testing. The Model.hs file was a tad verbose, but using pattern matching, guards, and where clauses to compute all the game logic was very simple and readable.  
 
 
 
