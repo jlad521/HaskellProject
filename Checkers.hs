@@ -19,7 +19,8 @@ import Data.List
 import Display
 import Model
 
-data Command = Action Move | Exit | SaveReplay String | Undo
+data Command = Action [Move] | Exit | SaveReplay String | Undo
+  deriving (Show, Eq)
 
 
 
@@ -95,7 +96,15 @@ parseMove [rs1, cs1, '-', rs2, cs2] =
        c2 <- if isDigit cs2 then Just (digitToInt cs2) else Nothing
        r2 <- if isLetter rs2 && (toUpper rs2) `elem` boardChars then Just (toUpper rs2) else Nothing
        l2 <- if c2 > 0 && c2 <= boardSize then Just (r2, c2) else Nothing
-       Just (Action (l1, l2))
+       Just (Action [(l1, l2)])
+parseMove (rs1:cs1:'-':rs2:cs2:'-':more) = do ms <- parseMove (rs2:cs2:'-':more)
+                                              m  <- parseMove [rs1,cs1,'-',rs2,cs2]
+                                              case ms of
+                                                Action moves -> case m of
+                                                                  Action move -> Just (Action (move++moves))
+                                                                  _           -> Nothing
+                                                _            -> Nothing
+
 parseMove "-q"                    = Just Exit
 parseMove ('-':'s':'r':' ':fname) = Just (SaveReplay fname)
 parseMove "-sr"                   = Just (SaveReplay defaultReplay)
@@ -133,7 +142,7 @@ play mode b@(Board mp) p mvs replay pbs =
        m <- case mvs of
                Nothing     -> getLine
                Just (x:xs) -> do putStrLn (setError ("Interpreting auto-move " ++ x))
-                                 threadDelay 10000
+                                 threadDelay 1000000
                                  return x
                Just []     -> do putStr (setError ("Auto-Play over, ran out of moves. You may continue playing."))
                                  putStr setMove
@@ -156,17 +165,18 @@ play mode b@(Board mp) p mvs replay pbs =
                                       (pb:pastbs) ->  do putStr (setError "Previous move undone.")
                                                          putStr (refreshBoard pb)
                                                          play mode pb (nextPlayer p) Nothing (tail replay) pastbs
-         Just (Action move) -> 
-           do case evalMove b p move mode of
+         Just (Action moves) -> 
+           do case evalMove b p moves mode of
                 (Nothing, Just err) -> do putStr (setError ("Invalid move: " ++ err))
                                           play mode b p Nothing replay pbs -- Invalid moves in auto, switch to manual
                -- (Just nb, Just vm)  -> do putStr (stringify nb boardSize boardChars)
                --                          putStr (setContext ("Victory for Player " ++ (show p)))
                 (Just nb, Nothing)  -> do putStr (refreshBoard nb)
                                           putStr (setError "")
-                                          if Model.isWin nb p mode || Model.isWin nb (nextPlayer p) mode then putStr (setContext ("Victory for Player " ++ (show p)))
+                                          if Model.isWin nb p mode || Model.isWin nb (nextPlayer p) mode 
+                                          then putStr (setContext ("Victory for Player " ++ (show p)))
                                           --else if Model.checkPossibleHops b p then play mode nb p fm (move : replay) (b : pbs)
-                                          else play mode nb (nextPlayer p) fm (move : replay) (b : pbs)
+                                          else play mode nb (nextPlayer p) fm (moves ++ replay) (b : pbs)
                 _                   -> putStr (setError ("An invalid evaluaton state has occurred."))
   
 

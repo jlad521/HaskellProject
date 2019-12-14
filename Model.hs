@@ -302,7 +302,7 @@ validStart (Board b) l p = case Map.lookup(l) b of
 evalMove :: Board -> Player -> [Move] -> GameMode -> (Maybe Board, Maybe String)
 evalMove b _ [] _    = (Just b, Just "error on evalMove list")
 evalMove b p [mv] gm = evalSingleMove b p mv gm 
-evalMove b p [m:mv] gm = case evalSingleMove b p m gm of
+evalMove b p (m:mv) gm = case evalSingleMove b p m gm of
                                (Just b, Nothing) -> evalMove b p mv gm 
                                (Nothing, Just e) -> (Nothing, Just e)
 -- core logic function. Verifies that a move is valid, and produces 
