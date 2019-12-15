@@ -182,10 +182,10 @@ possibleAdjacent (Board b) sl@(sl_r, sl_c) p=
              Nothing -> False
              Just (Piece player rank) ->
                case (player, rank) of 
-                  (OneB, Man) -> if adjacent (Board b) sl nw Man p   || adjacent (Board b) sl ne Man p then True else False
-                  (TwoW, Man) -> if adjacent (Board b) sl sw Man p   || adjacent (Board b) sl se Man p then True else False
-                  (_, Queen)  -> if adjacent (Board b) sl nw Queen p || adjacent (Board b) sl ne Queen p 
-                                 || adjacent (Board b) sl sw Queen p || adjacent (Board b) sl se Queen p then True else False
+                  (OneB, Man) -> adjacent (Board b) sl nw Man p   || adjacent (Board b) sl ne Man p
+                  (TwoW, Man) -> adjacent (Board b) sl sw Man p   || adjacent (Board b) sl se Man p
+                  (_, Queen)  -> adjacent (Board b) sl nw Queen p || adjacent (Board b) sl ne Queen p 
+                                 || adjacent (Board b) sl sw Queen p || adjacent (Board b) sl se Queen p
   where 
         sw = (pred sl_r, sl_c -1)
         se = (succ sl_r, sl_c -1)
@@ -200,10 +200,10 @@ possibleHop (Board b) sl@(sl_r, sl_c) p =
           Nothing -> False
           Just (Piece player rank) -> 
              case (player, rank) of 
-                (OneB, Man)   -> if fst (validHop (Board b) sl nnww rank p) || fst (validHop (Board b) sl nnee rank p) then True else False
-                (TwoW, Man)   -> if fst (validHop (Board b) sl ssww rank p) || fst (validHop (Board b) sl ssee rank p) then True else False
-                (_, Queen)    -> if fst (validHop (Board b) sl nnww rank p) || fst (validHop (Board b) sl nnee rank p)
-                                 || fst (validHop (Board b) sl ssww rank p) || fst (validHop (Board b) sl ssee rank p) then True else False
+                (OneB, Man)   -> fst (validHop (Board b) sl nnww rank p) || fst (validHop (Board b) sl nnee rank p)
+                (TwoW, Man)   -> fst (validHop (Board b) sl ssww rank p) || fst (validHop (Board b) sl ssee rank p)
+                (_, Queen)    -> fst (validHop (Board b) sl nnww rank p) || fst (validHop (Board b) sl nnee rank p)
+                                 || fst (validHop (Board b) sl ssww rank p) || fst (validHop (Board b) sl ssee rank p)
   where 
         ssww = (pred $ pred sl_r, sl_c -2)
         ssee = (succ $ succ sl_r, sl_c -2)
