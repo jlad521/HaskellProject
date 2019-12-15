@@ -195,33 +195,33 @@ manMoveTests =
              evalMove queenTestBoardW TwoW mvForQueenW Standard ~?= moveQueenResW -- test if it produces queen for white player
              
            ]
-    where badStart = (('F',3),('D',4))
-          moveFR = (('D', 4), ('E', 3))
-          moveFL = (('D', 4), ('C', 3))
-          moveBR = (('D', 4), ('E', 5))
-          moveBL = (('D', 4), ('C', 5))
+    where badStart = [(('F',3),('D',4))]
+          moveFR = [(('D', 4), ('E', 3))]
+          moveFL = [(('D', 4), ('C', 3))]
+          moveBR = [(('D', 4), ('E', 5))]
+          moveBL = [(('D', 4), ('C', 5))]
 
-          moveFRQ = (('F',3), ('E',1))
-          moveBLQ = (('E',7), ('F',8))
+          moveFRQ = [(('F',3), ('E',1))]
+          moveBLQ = [(('E',7), ('F',8))]
 
-          moveFR2 = (('D', 4), ('F', 2))
-          moveFL2 = (('D', 4), ('B', 2))
-          moveFL2B = (('D', 4), ('F', 6))
+          moveFR2 = [(('D', 4), ('F', 2))]
+          moveFL2 = [(('D', 4), ('B', 2))]
+          moveFL2B = [(('D', 4), ('F', 6))]
 
-          moveFROOB = (('C', 1), ('D', 0))
-          moveFLOOB = (('C', 1), ('B', 0))
+          moveFROOB = [(('C', 1), ('D', 0))]
+          moveFLOOB = [(('C', 1), ('B', 0))]
 
-          moveFROOBB = (('B', 8), ('A', 9))
-          moveFLOOBB = (('B', 8), ('C', 9))
+          moveFROOBB = [(('B', 8), ('A', 9))]
+          moveFLOOBB = [(('B', 8), ('C', 9))]
 
-          moveBadDirB = (('E',5),('C',3))
-          moveBadDirW = (('C',3),('E',5))
+          moveBadDirB = [(('E',5),('C',3))]
+          moveBadDirW = [(('C',3),('E',5))]
          
-          invFailMvB = (('A',1),('B',2))
-          invFailMvW = (('H',8),('G',7))
+          invFailMvB = [(('A',1),('B',2))]
+          invFailMvW = [(('H',8),('G',7))]
 
-          mvForQueenW = (('F',2), ('E',1))
-          mvForQueenB = (('E',7), ('F',8))
+          mvForQueenW = [(('F',2), ('E',1))]
+          mvForQueenB = [(('E',7), ('F',8))]
 
 queenMoveTests :: Test
 queenMoveTests = 
@@ -240,9 +240,9 @@ queenMoveTests =
 
            ]
   where 
-       queenMvSE = (('E',3),('C',5))
-       queenMvNE = (('E',5),('C',3))
-       queenMvW  = (('C',3),('E',5))
+       queenMvSE = [(('E',3),('C',5))]
+       queenMvNE = [(('E',5),('C',3))]
+       queenMvW  = [(('C',3),('E',5))]
 
 {-
 endGameTests :: Test
@@ -340,69 +340,5 @@ main = do runTestTT manMoveTests
           runTestTT queenMoveTests
          -- runTestTT endGameTests
           return ()
-
-
-{-
-unused 
-
-moveFR2res :: (Maybe Board, Maybe String)
-moveFR2res = let (Board m) = emptyBoard
-             in (Nothing, Just "Invalid ending location. Please try again.")
-
-moveFL2res :: (Maybe Board, Maybe String)
-moveFL2res = let (Board m) = emptyBoard
-             in (Nothing, Just "Invalid ending location. Please try again.")
-
-moveFROOBres :: (Maybe Board, Maybe String)
-moveFROOBres = let (Board m) = edgeBoardW
-             in (Nothing, Just "Invalid ending location. Please try again.")
-
-moveFLOOBres :: (Maybe Board, Maybe String)
-moveFLOOBres = let (Board m) = edgeBoardW
-               in (Nothing, Just "Invalid ending location. Please try again.")
-
-
-invalidStartRes :: (Maybe Board, Maybe String)
-invalidStartRes = let (Board m) = manBoardW
-                   in (Nothing, Just "Invalid starting location. Please try again.")           
-
-invalidStartResW :: (Maybe Board, Maybe String)
-invalidStartResW = let (Board m) = manBoardW
-                   in (Nothing, Just "Invalid starting location. Please try again.")           
-
-invalidStartResB :: (Maybe Board, Maybe String)
-invalidStartResB = let (Board m) = manBoardB
-                   in (Nothing, Just "Invalid starting location. Please try again.")           
-
-invalidEndEmpty :: (Maybe Board, Maybe String)
-invalidEndEmpty = let (Board m) = emptyBoard
-                in (Nothing, Just "Invalid ending location. Please try again.")
-
-moveOccupiedW :: (Maybe Board, Maybe String)
-moveOccupiedW = let (Board m) = occupiedBoardW
-                in (Nothing, Just "Invalid ending location. Please try again.")
-
-moveOccupiedB :: (Maybe Board, Maybe String)
-moveOccupiedB = let (Board m) = occupiedBoardB
-                in (Nothing, Just "Invalid ending location. Please try again.")
-
-invalidEndManBoardW :: (Maybe Board, Maybe String)
-invalidEndManBoardW = let (Board m) = manBoardW
-                      in (Nothing, Just "Invalid ending location. Please try again.")
-
-invalidEndManBoardB :: (Maybe Board, Maybe String)
-invalidEndManBoardB = let (Board m) = manBoardB
-                      in (Nothing, Just "Invalid ending location. Please try again.")
-
-
-
-
--}
-
-
-
-
-
-
 
 
