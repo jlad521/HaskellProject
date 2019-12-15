@@ -144,21 +144,26 @@ nextPlayer p = if p == OneB then TwoW else OneB
 {- 
 	Save a given sequence of moves to a file as a replay.
 -}
-saveReplay :: [Move] -> String -> IO ()
-saveReplay ms fname = writeFile fname (unlines (map format (reverse ms)))
-    where format ((c1, r1), (c2, r2)) = [c1, intToDigit r1, '-', c2, intToDigit r2]
+saveReplay :: [[Move]] -> String -> IO ()
+saveReplay ms fname = writeFile fname (unlines (map (\x -> moveToString (reverse x)) (reverse ms)))
+          
+moveToString :: [Move] -> String
+moveToString [] = ""
+moveToString [((c1,r1), (c2,r2))] = c1 : (intToDigit r1) : '-' : c2 : [intToDigit r2]
+moveToString (m:ms) = (moveToString [m]) ++ (concat (map onlyLast ms))
+    where onlyLast ((_,_), (c2,r2)) = '-' : c2 : [intToDigit r2]
 
 {-
 	Execute the read-eval-print loop for the game.
 -}
-play :: GameMode -> Board -> Player -> Maybe [String] -> [Move] -> [Board] -> IO ()       
+play :: GameMode -> Board -> Player -> Maybe [String] -> [[Move]] -> [Board] -> IO ()       
 play mode b@(Board mp) p mvs replay pbs =
     do putStr (setContext ("Player " ++ (show p) ++ "'s turn. Enter your move: "))
        putStr setMove
        m <- case mvs of
                Nothing     -> getLine
                Just (x:xs) -> do putStrLn (setError ("Interpreting auto-move " ++ x))
-                                 threadDelay 1000000
+                                 threadDelay 100000
                                  return x
                Just []     -> do putStr (setError ("Auto-Play over, ran out of moves. You may continue playing."))
                                  putStr setMove
@@ -185,14 +190,11 @@ play mode b@(Board mp) p mvs replay pbs =
            do case evalMove b p moves mode of
                 (Nothing, Just err) -> do putStr (setError ("Invalid move: " ++ err))
                                           play mode b p Nothing replay pbs -- Invalid moves in auto, switch to manual
-               -- (Just nb, Just vm)  -> do putStr (stringify nb boardSize boardChars)
-               --                          putStr (setContext ("Victory for Player " ++ (show p)))
                 (Just nb, Nothing)  -> do putStr (refreshBoard nb)
                                           putStr (setError "")
                                           if Model.isWin nb p mode || Model.isWin nb (nextPlayer p) mode 
                                           then putStr (setContext ("Victory for Player " ++ (show p)))
-                                          --else if Model.checkPossibleHops b p then play mode nb p fm (move : replay) (b : pbs)
-                                          else play mode nb (nextPlayer p) fm (moves ++ replay) (b : pbs)
+                                          else play mode nb (nextPlayer p) fm ((reverse moves) : replay) (b : pbs)
                 _                   -> putStr (setError ("An invalid evaluaton state has occurred."))
   
 
