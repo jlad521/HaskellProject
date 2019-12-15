@@ -11,27 +11,59 @@ module Model where
 import Data.Char -- import ord fn 
 import qualified Data.Map.Strict as Map
 
+{-
+	Data structure representing the game board.
+	Contains a mapping of Locations to tuples of tile Colors and Pieces.
+-}
 data Board  = Board (Map.Map (Char, Int) (Color, Maybe Piece))
     deriving (Show, Eq)
---data Tile   = Location (Char, Int) Color
+
+{-
+	Color of a game tile -- Black or White.
+	Used for convenient move rejection.
+-}
 data Color  = Black | White 
     deriving (Show, Eq)
+
+{-
+	Data structure representing a piece on the game board.
+	Contains the player that owns the piece and the Rank.
+-}
 data Piece  = Piece Player Rank
     deriving (Show, Eq)
+
+{-
+	The Rank of a checkers piece -- Man or Queen.
+-}
 data Rank   = Man | Queen
     deriving (Show, Eq)
 
+{-
+	Enumeration of players.
+-}
 data Player = OneB | TwoW
     deriving (Eq)
 
+{-
+	Custom implementation of Show for Players
+-}
 instance Show Player where
   show OneB = "Black"
   show TwoW = "White"
 
+{-
+	A location is a tuple of Char column and Int row.
+-}
 type Loc = (Char, Int)
 
+{-
+	A move is a tuple of two Locations
+-}
 type Move = (Loc, Loc)
 
+{-
+	Enumeration for game modes.
+-}
 data GameMode = Standard | Inverse
     deriving (Show, Eq)
 

@@ -244,23 +244,6 @@ queenMoveTests =
        queenMvNE = [(('E',5),('C',3))]
        queenMvW  = [(('C',3),('E',5))]
 
-{-
-endGameTests :: Test
-endGameTests =
-  TestList [
-
-            evalMove eatBoardB OneB winMvB Standard ~?= winResB,
-            evalMove eatBoardW TwoW winMvW Standard ~?= winResW,
-
-            evalMove eatBoardB OneB winMvB Inverse  ~?= winResB,
-            evalMove eatBoardW TwoW winMvW Inverse  ~?= winResW
-
-   
-  ]
-  where winMvB = (('D',4),('F',6))
-        winMvW = (('D',4),('F',2))
-
--}
 {- TEST RESULTS -}
 
 
@@ -338,7 +321,6 @@ winResB = let (Board m) = emptyBoard
 main :: IO ()
 main = do runTestTT manMoveTests
           runTestTT queenMoveTests
-         -- runTestTT endGameTests
           return ()
 
 
