@@ -247,8 +247,6 @@ queenMoveTests =
 
 {- TEST RESULTS -}
 
-
-
 invalidEnd :: (Maybe Board, Maybe String)
 invalidEnd =  (Nothing, Just "Invalid ending location. Please try again.")
 
@@ -338,7 +336,6 @@ winResB = let (Board m) = emptyBoard
 main :: IO ()
 main = do runTestTT manMoveTests
           runTestTT queenMoveTests
-         -- runTestTT endGameTests
           return ()
 
 

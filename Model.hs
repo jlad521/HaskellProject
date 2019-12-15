@@ -11,29 +11,60 @@ module Model where
 import Data.Char -- import ord fn 
 import qualified Data.Map.Strict as Map
 
+{-
+	Data structure representing the game board.
+	Contains a mapping of Locations to tuples of tile Colors and Pieces.
+-}
 data Board  = Board (Map.Map (Char, Int) (Color, Maybe Piece))
     deriving (Show, Eq)
 
+{-
+	Color of a game tile -- Black or White.
+	Used for convenient move rejection.
+-}
 data Color  = Black | White 
     deriving (Show, Eq)
 
+{-
+	Data structure representing a piece on the game board.
+	Contains the player that owns the piece and the Rank.
+-}
 data Piece  = Piece Player Rank
     deriving (Show, Eq)
+
+{-
+	The Rank of a checkers piece -- Man or Queen.
+-}
 
 data Rank   = Man | Queen
     deriving (Show, Eq)
 
+{-
+	Enumeration of players.
+-}
 data Player = OneB | TwoW
     deriving (Eq)
 
+{-
+	Custom implementation of Show for Players
+-}
 instance Show Player where
   show OneB = "Black"
   show TwoW = "White"
 
+{-
+	A location is a tuple of Char column and Int row.
+-}
 type Loc = (Char, Int)
 
+{-
+	A move is a tuple of two Locations
+-}
 type Move = (Loc, Loc)
 
+{-
+	Enumeration for game modes.
+-}
 data GameMode = Standard | Inverse
     deriving (Show, Eq)
 
@@ -214,10 +245,10 @@ possibleHop (Board b) sl@(sl_r, sl_c) p =
           Nothing -> False
           Just (Piece player rank) -> 
              case (player, rank) of 
-                (OneB, Man)   -> fst (validHop (Board b) sl nnww rank p) || fst (validHop (Board b) sl nnee rank p)
-                (TwoW, Man)   -> fst (validHop (Board b) sl ssww rank p) || fst (validHop (Board b) sl ssee rank p)
-                (_, Queen)    -> fst (validHop (Board b) sl nnww rank p) || fst (validHop (Board b) sl nnee rank p)
-                                 || fst (validHop (Board b) sl ssww rank p) || fst (validHop (Board b) sl ssee rank p)
+                (OneB, Man)   -> fst (validHop (Board b) sl nnww rank p False) || fst (validHop (Board b) sl nnee rank p False)
+                (TwoW, Man)   -> fst (validHop (Board b) sl ssww rank p False) || fst (validHop (Board b) sl ssee rank p False)
+                (_, Queen)    -> fst (validHop (Board b) sl nnww rank p False) || fst (validHop (Board b) sl nnee rank p False)
+                                 || fst (validHop (Board b) sl ssww rank p False) || fst (validHop (Board b) sl ssee rank p False)
   where 
         ssww = (pred $ pred sl_r, sl_c -2)
         ssee = (succ $ succ sl_r, sl_c -2)
@@ -259,37 +290,42 @@ inBounds el@(row, col) = ord row >= ord 'A' && ord row <= ord 'H' && col >= 1 &&
   ensures no hopping of same color, and hop over opposite color
   returns location of a validly hopped piece
 -}
-validHop :: Board -> Loc -> Loc -> Rank -> Player -> (Bool,Maybe Loc)
-validHop (Board b) sl@(sl_r, sl_c) el rank p 
+validHop :: Board -> Loc -> Loc -> Rank -> Player -> Bool -> (Bool,Maybe Loc)
+validHop (Board b) sl@(sl_r, sl_c) el rank p flag
       | el_piece /= Nothing = (False, Nothing)
-      | p == OneB     =   if      nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
-                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) && inBounds el then (True, Just ne)
-                          else if ssww == el && (sw_p == white_piece || sw_p == white_king) && inBounds el then (True, Just sw)
+      | (rank == Queen && p == OneB)  || (p == OneB && flag) =  
+                          if      ssww == el && (sw_p == white_piece || sw_p == white_king) && inBounds el then (True, Just sw)
                           else if ssee == el && (se_p == white_piece || se_p == white_king) && inBounds el then (True, Just se)
+                          else if nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
+                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) && inBounds el then (True, Just ne)
                           else (False, Nothing)
-
-      | p == TwoW     =   if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
+      | (rank == Queen && p == TwoW) || (p == TwoW && flag) =
+                          if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
                           else if ssee == el && (se_p == black_piece || se_p == black_king) && inBounds el then (True, Just se)
                           else if nnww == el && (nw_p == black_piece || nw_p == black_king) && inBounds el then (True, Just nw)
                           else if nnee == el && (ne_p == black_piece || ne_p == black_king) && inBounds el then (True, Just ne)
                           else (False, Nothing)
-
+      | p == OneB     =   if      nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
+                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) && inBounds el then (True, Just ne)
+                          else (False, Nothing)
+      | p == TwoW     =   if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
+                          else if ssee == el && (se_p == black_piece || se_p == black_king) && inBounds el then (True, Just se)
+                          else (False, Nothing)
       | otherwise = (False, Nothing)
-
-
   where ssww = (pred $ pred sl_r, sl_c -2)
         ssee = (succ $ succ sl_r, sl_c -2)
         nnww = (pred $ pred sl_r, sl_c +2)
         nnee = (succ $ succ sl_r, sl_c +2)
-        sw   = (pred sl_r, sl_c -1) -- can eliminate these with proper scoping, future work 
+        sw   = (pred sl_r, sl_c -1) -- can eliminate these with proper scoping, future work
         se   = (succ sl_r, sl_c -1)
         nw   = (pred sl_r, sl_c +1)
         ne   = (succ sl_r, sl_c +1)
-        sw_p =  Map.lookup(sw) b 
+        sw_p =  Map.lookup(sw) b
         se_p =  Map.lookup(se) b
-        nw_p =  Map.lookup(nw) b 
-        ne_p =  Map.lookup(ne) b 
+        nw_p =  Map.lookup(nw) b
+        ne_p =  Map.lookup(ne) b
         el_piece = getPiece (Board b) el
+
 {-
   takes a move and player, and returns the following: 
   first bool indicates if it's a valid move. 
@@ -297,8 +333,8 @@ validHop (Board b) sl@(sl_r, sl_c) el rank p
   Maybe Location: returns the location of the ending location if valid 
   sl = start location , el = end location 
 -}
-validEnd :: Board -> Move -> Player -> (Bool, Bool, Maybe Loc)
-validEnd brd@(Board b) (sl, el) p = 
+validEnd :: Board -> Move -> Player -> Bool -> (Bool, Bool, Maybe Loc)
+validEnd brd@(Board b) (sl, el) p flag = 
     case r of
       Nothing   -> (False, False, Nothing)
       Just rank -> case (Map.lookup(el) b) of
@@ -308,7 +344,7 @@ validEnd brd@(Board b) (sl, el) p =
                                                --then (True, hopLoc) 
                                                else (False, False, Nothing)
                       _                     -> (False, False, Nothing) -- Any destination that is not a black empty tile is invalid. 
-          where (hopValid, hopLoc) = validHop brd sl el rank p
+          where (hopValid, hopLoc) = validHop brd sl el rank p flag
   where r = case Map.lookup sl b of
                   Just (_, Just (Piece _ rnk)) -> Just rnk
                   _                            -> Nothing
@@ -325,23 +361,31 @@ validStart (Board b) l p = case Map.lookup(l) b of
   evaluates a list of Moves. If any of the moves in the list are invalid, sends an invalid error and starts player's move again
 -}
 evalMove :: Board -> Player -> [Move] -> GameMode -> (Maybe Board, Maybe String)
-evalMove b _ [] _    = (Just b, Just "error on evalMove list")
-evalMove b p [mv] gm = evalSingleMove b p mv gm 
-evalMove b p (m:mv) gm = case evalSingleMove b p m gm of
-                               (Just b, Nothing) -> evalMove b p mv gm 
+evalMove b p [] gm     = evalMoveHelper b p [] gm False
+evalMove b p [mv] gm   = evalSingleMove b p mv gm False
+evalMove b p (m:mv) gm = case evalSingleMove b p m gm False of
+                               (Just b, Nothing) -> evalMoveHelper b p mv gm True
                                (Nothing, Just e) -> (Nothing, Just e)
+
+evalMoveHelper :: Board -> Player -> [Move] -> GameMode -> Bool -> (Maybe Board, Maybe String)
+evalMoveHelper b _ [] _ _   = (Just b, Just "error on evalMove list")
+evalMoveHelper b p [mv] gm flag = evalSingleMove b p mv gm flag
+evalMoveHelper b p (m:mv) gm flag = case evalSingleMove b p m gm flag of
+                                      (Just b, Nothing) -> evalMoveHelper b p mv gm True
+                                      (Nothing, Just e) -> (Nothing, Just e)
+
 {-                               
   core logic function. Verifies that starting location is valid, ending location is valid, and if a hop is available for inverse mode
   If move is valid, it updates the game board. It returns either two responses:
   (updated Board, nothing) if valid; (nothing, "errorMessage") otherwise
 -}
-evalSingleMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
-evalSingleMove b p mv@(startLoc, endLoc) gm
+evalSingleMove :: Board -> Player -> Move -> GameMode -> Bool -> (Maybe Board, Maybe String)
+evalSingleMove b p mv@(startLoc, endLoc) gm flag
     | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
     | not $ valid_move              = (Nothing, Just "Invalid ending location. Please try again.")
     | gm == Inverse && (checkPossibleHops b p && not isHop)  = (Nothing, Just "Must take available hop move. Please try again.")
     | otherwise = case end_loc of 
                     Nothing -> (Just (updateBoard mv b), Nothing)
                     Just l  -> (Just (updateBoard mv (removePiece b l)), Nothing)
-  where (valid_move, isHop, end_loc) = validEnd b mv p   
+  where (valid_move, isHop, end_loc) = validEnd b mv p flag 
 
