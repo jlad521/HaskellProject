@@ -35,6 +35,7 @@ data Piece  = Piece Player Rank
 {-
 	The Rank of a checkers piece -- Man or Queen.
 -}
+
 data Rank   = Man | Queen
     deriving (Show, Eq)
 
@@ -69,32 +70,14 @@ data GameMode = Standard | Inverse
 
 
 {-
-Test function area
-
---b = new
-p1 = (Black, Just(Piece OneB Man))
-p2 = (Black, Just(Piece TwoW Man))
-
-test_valid = updateBoard (('B',6),('B',4)) actual_board
-
-valid_move = validEnd test_valid (('A',3),('C',5)) OneB
-invalid_move = validEnd test_valid (('A',3),('B',4)) OneB
-
-test_move = (('H',6),('G',5))
-test_start = ('H',6)
-
-possibleHopTest = possibleHop test_valid ('A',3) OneB
-
-
-end
+  Produces a new board with all the pieces on it
 -}
-
-
-
 newBoard :: Board
 newBoard = addPieces (Board (Map.fromList([ ((c, i), (White, Nothing)) | c <- ['A' .. 'H'], i <- [1..8]])))
 
--- Board without pieces for testing.
+{-
+  Board without pieces for testing.
+-}
 emptyBoard :: Board
 emptyBoard = Board (Map.mapWithKey toss nm)
   where toss :: Loc -> (Color, Maybe Piece) -> (Color, Maybe Piece)
@@ -103,14 +86,19 @@ emptyBoard = Board (Map.mapWithKey toss nm)
                          v           -> v 
         (Board nm) = newBoard
 
---define these as global, for use in various functions
+-- global definitions of pieces to reduce repitition of definitions
 black_piece = Just (Black, Just(Piece OneB Man))
 white_piece = Just (Black, Just(Piece TwoW Man))
 black_king  = Just (Black, Just(Piece OneB Queen))
 white_king  = Just (Black, Just(Piece TwoW Queen))
+
+-- used as the Board for starting a new game 
+actual_board :: Board 
 actual_board = newBoard
 
--- adds pieces of appropriate color to the previously empty Board
+{-
+  Puts all the starting pieces on an empty board (used in newBoard function)
+-}
 addPieces :: Board -> Board
 addPieces (Board pos) = aux (Board pos) 'H' 8
 
@@ -135,7 +123,9 @@ addPieces (Board pos) = aux (Board pos) 'H' 8
                       empty_square = aux (Board (Map.insert (c,row) (Black, Nothing ) brd )) (pred c) row 
                       next         = aux (Board brd) (pred c) row
 
--- updates the board with the verified valid move, producing the updated board
+{-
+  updates the board with the verified valid move, producing the updated board
+-}
 updateBoard :: Move -> Board -> Board 
 updateBoard (ol, dl) (Board brd) = nb
     where tile :: Maybe (Color, Maybe Piece)
@@ -147,38 +137,56 @@ updateBoard (ol, dl) (Board brd) = nb
                     _                -> Board brd -- Something went wrong, cancel update.
           am = Map.adjust (\ tup -> (fst tup, Nothing)) ol brd -- update OL to nothing
 
+{-
+  get function that returns a Piece at the specified Location 
+-}
 getPiece :: Board -> Loc -> Maybe Piece
 getPiece (Board b) l = case Map.lookup l b of
                             Nothing -> Nothing
                             Just (c, Nothing) -> Nothing
                             Just (c, Just p) -> Just p
 
+{-
+  get function that returns a Tile at the specified Location 
+-}
 getTile :: Board -> Loc -> (Color, Maybe Piece)
 getTile (Board b) l = case Map.lookup l b of
                          Nothing -> (White, Nothing)
                          Just x  -> x
 
+{-
+  get function that returns the Rank of a piece at the specified Location 
+-}
 getRank :: Board -> Loc -> Maybe Rank
 getRank (Board b) l = case Map.lookup l b of
                             Nothing -> Nothing
                             Just (c, Nothing) -> Nothing
                             Just (c, Just (Piece player rank)) -> Just rank
-
+{-
+  Removes a piece at a specified location, producing an updated board
+-}
 removePiece :: Board -> Loc -> Board
 removePiece (Board b) (c,i) = (Board (Map.insert (c,i) (Black, Nothing) b))
 
 
--- handles inverse game mode, no need for inverting logic when called in inverse mode
+{-
+  determines if the input player has won the game or not
+  handles inverse game mode by default, no need for inverting logic when called in inverse mode
+-}
 isWin :: Board -> Player -> GameMode -> Bool
 isWin (Board b) p m = noPiecesLeft (Board b) p m || noMovesLeft (Board b) p
 
 
--- we decided not to implement ties because they are so rare and difficult to compute
--- see http://www.darkfish.com/checkers/rules.html
+{-
+  we decided not to implement ties because they are so rare and difficult to compute
+  see http://www.darkfish.com/checkers/rules.html
+-}
 isTie :: Board -> Bool
 isTie = undefined
 
--- checks if a player is out of pieces to check 
+{-
+  checks if a player is out of pieces, for use in the isWin function 
+-}
 noPiecesLeft :: Board -> Player -> GameMode -> Bool 
 noPiecesLeft (Board b) p m = aux (Map.toList b) p m 
   where aux []     _ _  = True  
@@ -191,22 +199,27 @@ noPiecesLeft (Board b) p m = aux (Map.toList b) p m
         valid_man   =  (Black, Just(Piece player_chk Man))
         valid_queen =  (Black, Just(Piece player_chk Queen)) 
 
-
--- checks if there are any moves left for isWin
+{-
+  checks if there are any moves left for isWin
+-}
 noMovesLeft :: Board -> Player -> Bool
 noMovesLeft (Board b) p = aux (Map.toList b) p 
   where aux [] _      = True 
         aux (t:ts) p' = ( possibleHop (Board b) l p || possibleAdjacent (Board b) l p ) && aux ts p'
             where l  = fst t 
-
--- checks if there's a possible hop for inverse 
+{-
+  checks if there's a possible hop to enforce hop for inverse game mode & isWin function
+-}
 checkPossibleHops :: Board -> Player -> Bool
 checkPossibleHops (Board b) pl = aux (Map.toList b) pl
   where aux []     _ = False 
         aux (t:ts) p = possibleHop (Board b) l p || aux ts p 
             where l  = fst t 
 
--- checks if there's a possible adjacent move for isWin. 
+{-
+  checks if there's a possible adjacent move for isWin function. 
+  If no moves are available for the player, they will lose the game 
+-}
 possibleAdjacent :: Board -> Loc -> Player -> Bool
 possibleAdjacent (Board b) sl@(sl_r, sl_c) p=
         case getPiece (Board b) sl of 
@@ -223,8 +236,9 @@ possibleAdjacent (Board b) sl@(sl_r, sl_c) p=
         nw = (pred sl_r, sl_c +1)
         ne = (succ sl_r, sl_c +1)
 
-
--- checks if there's a possible hop, for inverse mode
+{-
+  checks if there's a possible hop, for inverse mode
+-}
 possibleHop :: Board -> Loc -> Player -> Bool
 possibleHop (Board b) sl@(sl_r, sl_c) p = 
         case getPiece (Board b) sl of
@@ -242,7 +256,9 @@ possibleHop (Board b) sl@(sl_r, sl_c) p =
         nnee = (succ $ succ sl_r, sl_c +2)
 
 
--- checks if adjacent square is a valid move
+{-
+  checks if adjacent square is a valid move, for use in validHop
+-}
 adjacent :: Board -> Loc -> Loc -> Rank -> Player -> Bool 
 adjacent (Board b) sl@(sl_r, sl_c) el rank p
           | el_piece /= Nothing = False 
@@ -264,32 +280,34 @@ adjacent (Board b) sl@(sl_r, sl_c) el rank p
             ne = (succ sl_r, sl_c +1)
             el_piece = getPiece (Board b) el 
 
+{-
+ function that determines if the location is in bounds, to prevent out of bound hops
+-}
 inBounds :: Loc -> Bool
 inBounds el@(row, col) = ord row >= ord 'A' && ord row <= ord 'H' && col >= 1 && col <= 8
 
---ensures no hopping of same color, and returns location of a validly hopped piece
+{-
+  ensures no hopping of same color, and hop over opposite color
+  returns location of a validly hopped piece
+-}
 validHop :: Board -> Loc -> Loc -> Rank -> Player -> (Bool,Maybe Loc)
 validHop (Board b) sl@(sl_r, sl_c) el rank p 
       | el_piece /= Nothing = (False, Nothing)
-      | rank == Queen && p == OneB =  
-                          if      ssww == el && (sw_p == white_piece || sw_p == white_king) && inBounds el then (True, Just sw)
-                          else if ssee == el && (se_p == white_piece || se_p == white_king) && inBounds el then (True, Just se)
-                          else if nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
+      | p == OneB     =   if      nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
                           else if nnee == el && (ne_p == white_piece || ne_p == white_king) && inBounds el then (True, Just ne)
+                          else if ssww == el && (sw_p == white_piece || sw_p == white_king) && inBounds el then (True, Just sw)
+                          else if ssee == el && (se_p == white_piece || se_p == white_king) && inBounds el then (True, Just se)
                           else (False, Nothing)
-      | rank == Queen && p == TwoW = 
-                          if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
+
+      | p == TwoW     =   if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
                           else if ssee == el && (se_p == black_piece || se_p == black_king) && inBounds el then (True, Just se)
                           else if nnww == el && (nw_p == black_piece || nw_p == black_king) && inBounds el then (True, Just nw)
                           else if nnee == el && (ne_p == black_piece || ne_p == black_king) && inBounds el then (True, Just ne)
                           else (False, Nothing)
-      | p == OneB     =   if      nnww == el && (nw_p == white_piece || nw_p == white_king) && inBounds el then (True, Just nw)
-                          else if nnee == el && (ne_p == white_piece || ne_p == white_king) && inBounds el then (True, Just ne)
-                          else (False, Nothing)
-      | p == TwoW     =   if      ssww == el && (sw_p == black_piece || sw_p == black_king) && inBounds el then (True, Just sw)
-                          else if ssee == el && (se_p == black_piece || se_p == black_king) && inBounds el then (True, Just se)
-                          else (False, Nothing)
+
       | otherwise = (False, Nothing)
+
+
   where ssww = (pred $ pred sl_r, sl_c -2)
         ssee = (succ $ succ sl_r, sl_c -2)
         nnww = (pred $ pred sl_r, sl_c +2)
@@ -303,11 +321,13 @@ validHop (Board b) sl@(sl_r, sl_c) el rank p
         nw_p =  Map.lookup(nw) b 
         ne_p =  Map.lookup(ne) b 
         el_piece = getPiece (Board b) el
-
--- sl = start location , el = end location 
--- first bool indicates if it's a valid move. 
--- second bool indicates if a piece was hopped (needed for inverse game mode)
--- Maybe Location: returns the location of the ending location if valid 
+{-
+  takes a move and player, and returns the following: 
+  first bool indicates if it's a valid move. 
+  second bool indicates if a piece was hopped (needed for inverse game mode)
+  Maybe Location: returns the location of the ending location if valid 
+  sl = start location , el = end location 
+-}
 validEnd :: Board -> Move -> Player -> (Bool, Bool, Maybe Loc)
 validEnd brd@(Board b) (sl, el) p = 
     case r of
@@ -325,23 +345,31 @@ validEnd brd@(Board b) (sl, el) p =
                   _                            -> Nothing
         
 
--- validates start location of a move.
+{-
+  validates start location of a move. True if it's a valid hop 
+-}
 validStart :: Board -> Loc -> Player -> Bool
 validStart (Board b) l p = case Map.lookup(l) b of
                              Just (Black, Just (Piece player _)) -> player == p -- Only valid start is an existing piece belonging to player.
                              _                                   -> False
+{-
+  evaluates a list of Moves. If any of the moves in the list are invalid, sends an invalid error and starts player's move again
+-}
 evalMove :: Board -> Player -> [Move] -> GameMode -> (Maybe Board, Maybe String)
 evalMove b _ [] _    = (Just b, Just "error on evalMove list")
 evalMove b p [mv] gm = evalSingleMove b p mv gm 
 evalMove b p (m:mv) gm = case evalSingleMove b p m gm of
                                (Just b, Nothing) -> evalMove b p mv gm 
                                (Nothing, Just e) -> (Nothing, Just e)
--- core logic function. Verifies that a move is valid, and produces 
--- (updated Board, nothing) if valid; (nothing, "errorMessage") otherwise
+{-                               
+  core logic function. Verifies that starting location is valid, ending location is valid, and if a hop is available for inverse mode
+  If move is valid, it updates the game board. It returns either two responses:
+  (updated Board, nothing) if valid; (nothing, "errorMessage") otherwise
+-}
 evalSingleMove :: Board -> Player -> Move -> GameMode -> (Maybe Board, Maybe String)
 evalSingleMove b p mv@(startLoc, endLoc) gm
     | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
-    | not $ valid_move     = (Nothing, Just "Invalid ending location. Please try again.")
+    | not $ valid_move              = (Nothing, Just "Invalid ending location. Please try again.")
     | gm == Inverse && (checkPossibleHops b p && not isHop)  = (Nothing, Just "Must take available hop move. Please try again.")
     | otherwise = case end_loc of 
                     Nothing -> (Just (updateBoard mv b), Nothing)

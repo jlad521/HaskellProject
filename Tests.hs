@@ -176,15 +176,12 @@ manMoveTests =
              evalMove eatBoardW TwoW moveFR2 Standard       ~?= eatBoardResW,
   
              --TODO: Hop over piece in wrong direciton as man (should fail)
-             evalMove wrongDirEatB OneB moveBadDirB Standard ~?= invalidEnd,
-             evalMove wrongDirEatW TwoW moveBadDirW Standard ~?= invalidEnd,
+             evalMove wrongDirEatB OneB moveBadDirB Standard ~?= eatBoardBkwrdB,
+             evalMove wrongDirEatW TwoW moveBadDirW Standard ~?= eatBoardBkwrdW,
 
              --TODO: Fail to hop over a man of same color.
              evalMove eatBoardFailB OneB moveFL2B Standard   ~?= invalidEnd,
              evalMove eatBoardFailW TwoW moveFR2 Standard    ~?= invalidEnd,
-
-             --TODO: test if you can mkae multiple jumps in one turn! 
-
 
              -- Check that inverse mode enforces a move
              evalMove inverseFailB OneB invFailMvB Inverse   ~?= inverseFailRes,
@@ -227,9 +224,6 @@ queenMoveTests :: Test
 queenMoveTests = 
   TestList [
 
-          -- basic queen movements 
-          --necessary??
-            
              -- Hop over over man in normal direction 
              evalMove eatBoardQueenForwB OneB queenMvSE Standard  ~?= queenEatForwResB,
              evalMove eatBoardQueenForwW TwoW queenMvNE Standard  ~?= queenEatForwResW,
@@ -244,9 +238,8 @@ queenMoveTests =
        queenMvNE = [(('E',5),('C',3))]
        queenMvW  = [(('C',3),('E',5))]
 
+
 {- TEST RESULTS -}
-
-
 
 invalidEnd :: (Maybe Board, Maybe String)
 invalidEnd =  (Nothing, Just "Invalid ending location. Please try again.")
@@ -280,6 +273,14 @@ eatBoardResW = let (Board m) = emptyBoard
 eatBoardResB :: (Maybe Board, Maybe String)
 eatBoardResB = let (Board m) = emptyBoard
                in (Just (Board (Map.adjust bm ('F', 6) m)), Nothing) 
+
+eatBoardBkwrdB :: (Maybe Board, Maybe String)
+eatBoardBkwrdB  = let (Board m) = emptyBoard
+                  in (Just (Board (Map.adjust bm ('C', 3) m)), Nothing)
+
+eatBoardBkwrdW :: (Maybe Board, Maybe String)
+eatBoardBkwrdW = let (Board m) = emptyBoard
+             in (Just (Board (Map.adjust wm ('E', 5) m)), Nothing)
 
 moveQueenResW :: (Maybe Board, Maybe String)
 moveQueenResW = let (Board m) = emptyBoard
