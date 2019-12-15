@@ -79,7 +79,6 @@ me mode and autoplay.
 * play      -- The heart and soul of the program. Executes the main REP loop.
 
 ###### Model
-TODO
 This module contains the core game logic. 
 
 * newBoard          -- creates a new checkers Board with all the pieces on it
