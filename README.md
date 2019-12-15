@@ -79,7 +79,7 @@ me mode and autoplay.
 * play      -- The heart and soul of the program. Executes the main REP loop.
 
 ###### Model
-This module contains the core game logic. 
+This module contains the core game logic. The main functions are newBoard, isWin, and evalMove.
 
 * newBoard          -- creates a new checkers Board with all the pieces on it
 * updateBoard       -- performs a valid Move on the Board, producing updated board
