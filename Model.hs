@@ -38,12 +38,10 @@ data GameMode = Standard | Inverse
 
 {-
 Test function area
--}
 
 --b = new
 p1 = (Black, Just(Piece OneB Man))
 p2 = (Black, Just(Piece TwoW Man))
-actual_board = newBoard
 
 test_valid = updateBoard (('B',6),('B',4)) actual_board
 
@@ -55,7 +53,7 @@ test_start = ('H',6)
 
 possibleHopTest = possibleHop test_valid ('A',3) OneB
 
-{-
+
 end
 -}
 
@@ -78,6 +76,7 @@ black_piece = Just (Black, Just(Piece OneB Man))
 white_piece = Just (Black, Just(Piece TwoW Man))
 black_king  = Just (Black, Just(Piece OneB Queen))
 white_king  = Just (Black, Just(Piece TwoW Queen))
+actual_board = newBoard
 
 -- adds pieces of appropriate color to the previously empty Board
 addPieces :: Board -> Board
