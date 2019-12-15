@@ -19,24 +19,31 @@ import Data.List
 import Display
 import Model
 
+{-
+	Data structure used to process commands during gameplay.
+-}
 data Command = Action [Move] | Exit | SaveReplay String | Undo
   deriving (Show, Eq)
 
 
 
--- Board size hardcoded for now, might be customizeable later.
+-- Board size
 boardSize :: Int
 boardSize = 8
 
+-- Letter labels for columns
 boardChars :: [Char]
 boardChars = map chr [ord('A') .. ord('A') + boardSize - 1]
 
+-- Usage statement
 usage :: String
 usage = "Usage: runhaskell Checkers {classic|inverse} [auto=file-name]"
 
+-- Default replay file name.
 defaultReplay :: String
 defaultReplay = "MyReplay.txt"
 
+-- Help message
 helpMsg :: String
 helpMsg = unlines [
     "You may enter any of the following commands instead of a move at any time:", 
@@ -50,7 +57,9 @@ helpMsg = unlines [
     "    " ++ bMan ++ " - Black Man",
     "    " ++ bQueen ++ " - Black Queen"]
 
--- Parse command line arguments to the checkers game.
+{-
+	Parse command line arguments to the checkers game.
+-}
 parseArgs :: [String] -> Maybe (GameMode, String, Int)
 parseArgs [m, s] = 
     do mv <- case map toLower m of
@@ -67,7 +76,9 @@ parseArgs [m, ('a':'u':'t':'o':'=':fname), s] =
       Just (gm, _, bs) -> Just (gm, fname, bs)
 parseArgs _ = Nothing
 
--- Parse command line arguments and dispatch the appropriate game loop.
+{-
+	Parse command line arguments and dispatch the appropriate game loop.
+-}
 main :: IO ()
 main = do args <- getArgs
           case parseArgs (args ++ [show boardSize]) of -- hack until board is dynamic
@@ -84,10 +95,11 @@ main = do args <- getArgs
                  putStr (setHelp ++ helpMsg)
                  play mode board TwoW moves [] [] -- Game always starts with White
 
-          
--- Parse a given string into a move.
--- Expected move format: RowColumn-RowColumn
--- Shoutout to pattern matching for making this possible.
+{-      
+	Parse a given string into a move.
+	Expected move format: RowColumn-RowColumn
+	Shoutout to pattern matching for making this possible.
+-}
 parseMove :: String -> Maybe Command
 parseMove [rs1, cs1, '-', rs2, cs2] =
     do c1 <- if isDigit cs1 then Just (digitToInt cs1) else Nothing
@@ -97,13 +109,14 @@ parseMove [rs1, cs1, '-', rs2, cs2] =
        r2 <- if isLetter rs2 && (toUpper rs2) `elem` boardChars then Just (toUpper rs2) else Nothing
        l2 <- if c2 > 0 && c2 <= boardSize then Just (r2, c2) else Nothing
        Just (Action [(l1, l2)])
-parseMove (rs1:cs1:'-':rs2:cs2:'-':more) = do ms <- parseMove (rs2:cs2:'-':more)
-                                              m  <- parseMove [rs1,cs1,'-',rs2,cs2]
-                                              case ms of
-                                                Action moves -> case m of
-                                                                  Action move -> Just (Action (move++moves))
-                                                                  _           -> Nothing
-                                                _            -> Nothing
+parseMove (rs1:cs1:'-':rs2:cs2:'-':more) = 
+    do ms <- parseMove (rs2:cs2:'-':more)
+       m  <- parseMove [rs1,cs1,'-',rs2,cs2]
+       case ms of
+         Action moves -> case m of
+                           Action move -> Just (Action (move++moves))
+                           _           -> Nothing
+         _            -> Nothing
 
 parseMove "-q"                    = Just Exit
 parseMove ('-':'s':'r':' ':fname) = Just (SaveReplay fname)
@@ -122,7 +135,9 @@ readAutoMoves fname = do lines <- readFile fname --getContents
                            "" -> return Nothing
                            ls -> return (Just (filter (/="") (splitOn '\n' lines)))
 
--- Get next player to take a turn.
+{-
+	Get next player to take a turn.
+-}
 nextPlayer :: Player -> Player
 nextPlayer p = if p == OneB then TwoW else OneB
 
@@ -133,8 +148,9 @@ saveReplay :: [Move] -> String -> IO ()
 saveReplay ms fname = writeFile fname (unlines (map format (reverse ms)))
     where format ((c1, r1), (c2, r2)) = [c1, intToDigit r1, '-', c2, intToDigit r2]
 
-
--- Execute the read-eval-print loop for the game.
+{-
+	Execute the read-eval-print loop for the game.
+-}
 play :: GameMode -> Board -> Player -> Maybe [String] -> [Move] -> [Board] -> IO ()       
 play mode b@(Board mp) p mvs replay pbs =
     do putStr (setContext ("Player " ++ (show p) ++ "'s turn. Enter your move: "))
@@ -183,14 +199,19 @@ play mode b@(Board mp) p mvs replay pbs =
 
 
 
-{- Helper functions-}
+{- #### Helper functions #### -}
 
--- Split a list on a given delimeter.
+{-
+	Split a list on a given delimeter.
+-}
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn delim lst = foldr f [[]] lst
   where f c l@(x:xs) | c == delim = [] : l
                      | otherwise = (c : x) : xs
 
+{-
+	Remove all leading and trailing whitespace from a string.
+-}
 trim :: String -> String
 trim s = dropper (reverse (dropper (reverse s)))
   where dropper = dropWhile isSpace

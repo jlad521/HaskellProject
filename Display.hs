@@ -30,7 +30,9 @@ bMan = "○"
 bQueen :: String
 bQueen = "◔"
 
--- Convert a checkers Piece to String.
+{-
+	Convert a Piece object to String.
+-}
 pts :: Piece -> String
 pts (Piece OneB Man)   = bMan
 pts (Piece OneB Queen) = bQueen
@@ -55,7 +57,9 @@ stringify (Board m) cs rs = concat result
                     locs = groupBy (\ l1 l2 -> snd l1 == snd l2 ) [(r, c) | c <- [1 .. cs], r <- rs] -- guaranteed to be in order
           result = (intersperse ("\n") ( intersperse sep ([colHeader] ++ rows))) ++ ["\n", sep]
 
--- Build an individual row based on Board contents
+{-
+	Build an individual row based on Board contents
+-}
 buildRow :: Board -> [(Char, Int)] -> String
 buildRow (Board m) locs = show (snd (head locs)) ++ " |" ++ concat (map (\ p -> p ++ "|") pieces)
     where pieces = map (\ l -> case Map.lookup l m of
@@ -68,7 +72,7 @@ buildRow (Board m) locs = show (snd (head locs)) ++ " |" ++ concat (map (\ p -> 
                                                       else " " ++ (pts p) ++ " ") locs
 
 
-{- Cursor Control Functionality -}
+{- #### Cursor Control Functionality #### -}
 
 -- A representation of the ESC char.
 esc :: Char
@@ -86,11 +90,15 @@ whiteBG = esc : "[47m"
 blackBG :: String
 blackBG = esc : "[40m"
 
--- Position the cursor at given Row, Col coordinates (in screen space).
+{-
+	Position the cursor at given Row, Col coordinates (in screen space).
+-}
 setCursor :: Int -> Int -> String
 setCursor line col = [esc] ++ "[" ++ (show line) ++ ";" ++ (show col) ++ "H"
 
--- Generate an escape sequence to position a given value at a given location.
+{-
+	Generate an escape sequence to position a given value at a given location.
+-}
 setTile :: Maybe Piece -> Loc -> String
 setTile p (col, row) = (setCursor (1 + (2 * row)) (1 + (4 * colOffset))) ++ toPut
     where colOffset = (ord col) - 64
@@ -98,13 +106,19 @@ setTile p (col, row) = (setCursor (1 + (2 * row)) (1 + (4 * colOffset))) ++ toPu
                     Nothing    -> " "
                     Just piece -> pts piece
 
+-- Generates a line of 80 space chars
 clearLine :: String
 clearLine = take 80 (repeat ' ')
 
--- Set the contents of the contextual message area
+{-
+	Set the contents of the contextual message area
+-}
 setContext :: String -> String
 setContext l = (setCursor 20 0) ++ clearLine ++ (setCursor 20 0) ++ l
 
+{-
+	Set the contents of the error message area.
+-}
 setError :: String -> String
 setError e = (setCursor 21 0) ++ clearLine ++ (setCursor 21 0) ++ e
 
@@ -112,13 +126,17 @@ setError e = (setCursor 21 0) ++ clearLine ++ (setCursor 21 0) ++ e
 setMove :: String 
 setMove = (setCursor 22 0) ++ clearLine ++ (setCursor 22 0)
 
+-- Switch the cursor to board area.
 setBoard :: String
 setBoard = setCursor 0 0
 
+-- Switch the cursor to help area.
 setHelp :: String
 setHelp = setCursor 26 0
 
--- Perform an in-place update for all game tiles on the board.
+{-
+	Perform an in-place update for all game tiles on the board.
+-}
 refreshBoard :: Board -> String
 refreshBoard b = concat (map func options)
     where options = [(c, r) | c <- ['A'..'H'], r <- [1..8]]
@@ -128,7 +146,7 @@ refreshBoard b = concat (map func options)
                         
 
 
-{- DEBUGGING -}
+{- #### DEBUGGING UTILITIES #### -}
 
 dump :: Board -> IO ()
 dump b = putStrLn (stringify b 8 ['A'..'H'])
