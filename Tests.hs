@@ -80,7 +80,7 @@ eatBoardB = let (Board m) = manBoardB
 
 wrongDirEatB :: Board
 wrongDirEatB = let (Board m) = manBoardW
-            in  (Board (Map.adjust bm ('E',5) m)) 
+               in  (Board (Map.adjust bm ('E',5) m)) 
 
 wrongDirEatW :: Board
 wrongDirEatW = let (Board m) = manBoardB
@@ -89,7 +89,7 @@ wrongDirEatW = let (Board m) = manBoardB
 -- need to double check the locations
 eatBoardFailW :: Board 
 eatBoardFailW = let (Board m) = manBoardW 
-            in  (Board (Map.adjust wm ('E',3) m)) 
+                in  (Board (Map.adjust wm ('E',3) m)) 
 
 eatBoardFailB :: Board 
 eatBoardFailB = let (Board m) = manBoardB 
@@ -103,14 +103,13 @@ inverseFailB :: Board
 inverseFailB = let (Board m) = eatBoardB 
                in (Board (Map.adjust bm ('A',1) m)) 
 
--- inverseFailW :: Board
--- inverseFailW = let (Board m) = inverseFailWHelper 
---                 in 
+doubleHopB :: Board 
+doubleHopB = let (Board m) = eatBoardB 
+             in  (Board (Map.adjust wm ('G',5) m))
 
--- inverseFailB :: Board 
--- inverseFailB = let (Board m) = manBoardB
---                 in 
-
+doubleHopW :: Board 
+doubleHopW = let (Board m) = eatBoardW 
+             in  (Board (Map.adjust bm ('G',3) m))
 
 -- Board with piece 1 row away from turning into queen. Should be a queen after the move. 
 queenTestBoardW :: Board 
@@ -170,24 +169,27 @@ manMoveTests =
              evalMove occupiedBoardB OneB moveBR Standard   ~?= invalidEnd,
              evalMove occupiedBoardW TwoW moveFR2 Standard  ~?= invalidEnd,
 
-             
-             --TODO: Hop over a man of opposite color and eat.
+             -- Hop over a man of opposite color and eat.
              evalMove eatBoardB OneB moveFL2B Standard      ~?= eatBoardResB,
              evalMove eatBoardW TwoW moveFR2 Standard       ~?= eatBoardResW,
   
-             --TODO: Hop over piece in wrong direciton as man (should fail)
-             evalMove wrongDirEatB OneB moveBadDirB Standard ~?= eatBoardBkwrdB,
-             evalMove wrongDirEatW TwoW moveBadDirW Standard ~?= eatBoardBkwrdW,
+             -- Hop over piece in wrong direciton as man (should fail)
+             evalMove wrongDirEatB OneB moveBadDirB Standard ~?= invalidEnd,
+             evalMove wrongDirEatW TwoW moveBadDirW Standard ~?= invalidEnd,
 
-             --TODO: Fail to hop over a man of same color.
+             -- Fail to hop over a man of same color.
              evalMove eatBoardFailB OneB moveFL2B Standard   ~?= invalidEnd,
              evalMove eatBoardFailW TwoW moveFR2 Standard    ~?= invalidEnd,
+
+             -- check that double hop works, with hop in backwards direction
+             evalMove doubleHopB OneB dblMvB Standard ~?= doubleResB,
+             evalMove doubleHopW TwoW dblMvW Standard ~?= doubleResW,
 
              -- Check that inverse mode enforces a move
              evalMove inverseFailB OneB invFailMvB Inverse   ~?= inverseFailRes,
              evalMove inverseFailW TwoW invFailMvW Inverse   ~?= inverseFailRes,
 
-             --TODO: Become a queen.
+             -- Become a queen
              evalMove queenTestBoardB OneB mvForQueenB Standard   ~?= moveQueenResB, -- test if it produces queen for white player
              evalMove queenTestBoardW TwoW mvForQueenW Standard ~?= moveQueenResW -- test if it produces queen for white player
              
@@ -213,6 +215,10 @@ manMoveTests =
 
           moveBadDirB = [(('E',5),('C',3))]
           moveBadDirW = [(('C',3),('E',5))]
+
+          dblMvB = [(('D',4), ('F',6)), (('F',6),('H',4))]
+          dblMvW = [(('D',4), ('F',2)), (('F',2),('H',4))]
+
          
           invFailMvB = [(('A',1),('B',2))]
           invFailMvW = [(('H',8),('G',7))]
@@ -282,7 +288,15 @@ eatBoardBkwrdB  = let (Board m) = emptyBoard
 
 eatBoardBkwrdW :: (Maybe Board, Maybe String)
 eatBoardBkwrdW = let (Board m) = emptyBoard
-             in (Just (Board (Map.adjust wm ('E', 5) m)), Nothing)
+                 in (Just (Board (Map.adjust wm ('E', 5) m)), Nothing)
+
+doubleResB :: (Maybe Board, Maybe String)
+doubleResB = let (Board m) = emptyBoard
+             in (Just (Board (Map.adjust bm ('H', 4) m)), Nothing)
+
+doubleResW :: (Maybe Board, Maybe String)
+doubleResW = let (Board m) = emptyBoard
+             in (Just (Board (Map.adjust wm ('H', 4) m)), Nothing)
 
 moveQueenResW :: (Maybe Board, Maybe String)
 moveQueenResW = let (Board m) = emptyBoard
@@ -291,7 +305,6 @@ moveQueenResW = let (Board m) = emptyBoard
 moveQueenResB :: (Maybe Board, Maybe String)
 moveQueenResB = let (Board m) = emptyBoard
                 in (Just (Board (Map.adjust bq ('F', 8) m)), Nothing)
-
 
 queenEatForwResB :: (Maybe Board, Maybe String)
 queenEatForwResB = let (Board m) = emptyBoard
@@ -309,6 +322,7 @@ queenEatBkwrdResW :: (Maybe Board, Maybe String)
 queenEatBkwrdResW = let (Board m) = emptyBoard
                    in (Just (Board (Map.adjust wq ('E', 5) m)), Nothing)
 
+{-
 winResW :: (Maybe Board, Maybe String)
 winResW = let (Board m) = emptyBoard
           in (Just (Board (Map.adjust wm ('F', 2) m)), Just("Victory; game over"))
@@ -316,7 +330,7 @@ winResW = let (Board m) = emptyBoard
 winResB :: (Maybe Board, Maybe String)
 winResB = let (Board m) = emptyBoard
                    in (Just (Board (Map.adjust wm ('F', 6) m)), Just("Victory; game over"))
-
+-}
 
 {- ##################### -}
 

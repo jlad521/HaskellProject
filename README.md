@@ -83,12 +83,14 @@ This module contains the core game logic. The main functions are newBoard, isWin
 
 * newBoard          -- creates a new checkers Board with all the pieces on it
 * updateBoard       -- performs a valid Move on the Board, producing updated board
-* checkPossibleHops -- checks if there's an available hop for inverse mode. [also used for doubleHops?]
-* isWin             -- checks if a player is out of pieces or they don't have an possible move. 
-* validHop          -- checks if a move is valid
-* validStart        -- checks if a move has a valid starting location
-* validEnd          -- checks if a move has a valid ending location
-* evalMove          -- computes a move by checking validStart, validEnd, isWin, if a hop is available in inverse mode, or updates the Board with the input move. 
+* checkPossibleHops -- checks if there's an available hop for inverse mode. 
+* isWin             -- checks if a player is out of pieces or they don't have an possible move. Either are false, the player loses. 
+* validHop          -- checks if a hop is valid
+* validStart        -- checks if a Move has a valid starting location
+* validEnd          -- checks if a Move has a valid ending location
+* evalMove          -- computes a list of Moves by calling evalSingleMove. Only updates the board if all the moves are valid; otherwise, rolls back as an invalid Move. 
+* evalMoveHelper    -- helper function to ensure Man hopping backwards can only happen after at least one hop
+* evalSingleMove    -- checks validStart, validEnd, if a hop is available in inverse mode. If all of those pass, it returns an updated the Board with the Move completed. 
 
 ###### Display
 This module contains all the functionality related to visualization and cursor 
