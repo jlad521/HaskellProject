@@ -361,28 +361,29 @@ validStart (Board b) l p = case Map.lookup(l) b of
   evaluates a list of Moves. If any of the moves in the list are invalid, sends an invalid error and starts player's move again
 -}
 evalMove :: Board -> Player -> [Move] -> GameMode -> (Maybe Board, Maybe String)
-evalMove b p [] gm     = evalMoveHelper b p [] gm False
-evalMove b p [mv] gm   = evalSingleMove b p mv gm False
-evalMove b p (m:mv) gm = case evalSingleMove b p m gm False of
-                               (Just b, Nothing) -> evalMoveHelper b p mv gm True
+evalMove b p [] gm     = evalMoveHelper b p [] gm False False
+evalMove b p [mv] gm   = evalSingleMove b p mv gm False False
+evalMove b p (m:mv) gm = case evalSingleMove b p m gm False True of
+                               (Just b, Nothing) -> evalMoveHelper b p mv gm True True
                                (Nothing, Just e) -> (Nothing, Just e)
 
-evalMoveHelper :: Board -> Player -> [Move] -> GameMode -> Bool -> (Maybe Board, Maybe String)
-evalMoveHelper b _ [] _ _   = (Just b, Just "error on evalMove list")
-evalMoveHelper b p [mv] gm flag = evalSingleMove b p mv gm flag
-evalMoveHelper b p (m:mv) gm flag = case evalSingleMove b p m gm flag of
-                                      (Just b, Nothing) -> evalMoveHelper b p mv gm True
-                                      (Nothing, Just e) -> (Nothing, Just e)
+evalMoveHelper :: Board -> Player -> [Move] -> GameMode -> Bool -> Bool -> (Maybe Board, Maybe String)
+evalMoveHelper b _ [] _ _ _  = (Just b, Just "error on evalMove list")
+evalMoveHelper b p [mv] gm flag multi = evalSingleMove b p mv gm flag False
+evalMoveHelper b p (m:mv) gm flag multi = case evalSingleMove b p m gm flag multi of
+                                            (Just b, Nothing) -> evalMoveHelper b p mv gm flag multi
+                                            (Nothing, Just e) -> (Nothing, Just e)
 
 {-                               
   core logic function. Verifies that starting location is valid, ending location is valid, and if a hop is available for inverse mode
   If move is valid, it updates the game board. It returns either two responses:
   (updated Board, nothing) if valid; (nothing, "errorMessage") otherwise
 -}
-evalSingleMove :: Board -> Player -> Move -> GameMode -> Bool -> (Maybe Board, Maybe String)
-evalSingleMove b p mv@(startLoc, endLoc) gm flag
+evalSingleMove :: Board -> Player -> Move -> GameMode -> Bool -> Bool -> (Maybe Board, Maybe String)
+evalSingleMove b p mv@(startLoc, endLoc) gm flag multi 
     | not (validStart b startLoc p) = (Nothing, Just "Invalid starting location. Please try again.")
     | not $ valid_move              = (Nothing, Just "Invalid ending location. Please try again.")
+    | multi && (not isHop)          = (Nothing, Just "Cannot perform multiple moves without hops.")
     | gm == Inverse && (checkPossibleHops b p && not isHop)  = (Nothing, Just "Must take available hop move. Please try again.")
     | otherwise = case end_loc of 
                     Nothing -> (Just (updateBoard mv b), Nothing)
